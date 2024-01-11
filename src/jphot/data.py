@@ -33,7 +33,7 @@ def jwst_data(images_dir='.', ext='i2d.fits', show_filters=False):
 
   return dict_images_jwst
 
-def hst_data(images_dir='.', ext='i2d.fits', show_filters=False):
+def hst_data(images_dir='.', ext='drc.fits', show_filters=False):
   
   images = sorted(glob.glob(os.path.join(images_dir, f"*/*{ext}")))
   
