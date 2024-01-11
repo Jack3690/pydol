@@ -8,7 +8,7 @@ class Base():
     self.regions = {}
     self.dict_images = {}
 
-  def NIRCAM_phot(self, out_dir, region='bubble', filt_n='F115W', d=50, comp=True, 
+  def nircam_phot(self, out_dir, region='bubble', filt_n='F115W', d=50, comp=True, 
                skip_phot=False):
   
     ra, dec = self.regions[region]['ra'], regions[region]['dec']
