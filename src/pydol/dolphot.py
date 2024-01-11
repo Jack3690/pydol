@@ -4,6 +4,11 @@ from .catalog import filter_phot
 import pandas as pd
 import numpy as np
 
+from pathlib import Path
+
+scripts = Path(__file__).parent.joinpath('scripts')
+params = Path(__file__).parent.joinpath('params]')
+
 class Base():
   def __init__(self, dict_images={}, regions={}):
     self.regions = {}
@@ -32,7 +37,7 @@ class Base():
         os.system(f"nircammask ../{out_dir}/{region}/{filt_n}/data.fits")
   
         # Generating cutout
-        os.system(f"python ../scripts/dolphot_convert_nircam.py --f ../{out_dir}/{region}/{filt_n}/data.fits --d 'NRCB3' --c True --ra {ra} --dec {dec} --radius {d}")
+        os.system(f"python {scripts}/dolphot_convert_nircam.py --f ../{out_dir}/{region}/{filt_n}/data.fits --d 'NRCB3' --c True --ra {ra} --dec {dec} --radius {d}")
   
         # Removing copy
         os.remove(f"../{out_dir}/{region}/{filt_n}/data.fits")
@@ -41,16 +46,16 @@ class Base():
         os.system(f"calcsky ../{out_dir}/{region}/{filt_n}/data_conv 10 25 2 2.25 2.00")
   
         # Editing DOLPHOT parameter file
-        with open("../params/nircam_dolphot.param") as f:
+        with open("{params}/nircam_dolphot.param") as f:
             dat = f.readlines()
   
         dat[4] = f'img1_file = ../{out_dir}/{region}/{filt_n}/data_conv            #image 1\n'
   
-        with open("../params/nircam_dolphot.param", 'w', encoding='utf-8') as f:
+        with open("{params}/nircam_dolphot.param", 'w', encoding='utf-8') as f:
             f.writelines(dat)
   
         # Running DOLPHOT
-        os.system(f"dolphot ../{out_dir}/{region}/{filt_n}/out -p../params/nircam_dolphot.param")
+        os.system(f"dolphot ../{out_dir}/{region}/{filt_n}/out -p{params}/nircam_dolphot.param")
   
         # Filtering Output photometric catalog
   
@@ -67,16 +72,16 @@ class Base():
             os.system(f"calcsky ../PHOT_OUTPUT_m50/{region}/{filt_n}/data_conv 10 25 2 2.25 2.00")
   
             # Editing DOLPHOT parameter file
-            with open("../params/nircam_dolphot.param") as f:
+            with open("{params}/nircam_dolphot.param") as f:
                 dat = f.readlines()
   
             dat[4] = f'img1_file = ../PHOT_OUTPUT_m50/{region}/{filt_n}/data_conv            #image 1\n'
   
-            with open("../params/nircam_dolphot.param", 'w', encoding='utf-8') as f:
+            with open("{params}/nircam_dolphot.param", 'w', encoding='utf-8') as f:
                 f.writelines(dat)
   
             # Running DOLPHOT
-            os.system(f"dolphot ../PHOT_OUTPUT_m50/{region}/{filt_n}/out -p../params/nircam_dolphot.param")
+            os.system(f"dolphot ../PHOT_OUTPUT_m50/{region}/{filt_n}/out -p{params}/nircam_dolphot.param")
   
             # Filtering Output photometric catalog
   
@@ -112,7 +117,7 @@ class Base():
         os.system(f"acsmask ../{out_dir}/{region}/{filt_n}/data.fits")
   
         # Generating cutout
-        os.system(f"python ../scripts/dolphot_convert_acs.py --f ../{out_dir}/{region}/{filt_n}/data.fits --c True --ra {ra} --dec {dec} --radius {d}")
+        os.system(f"python {scripts}/dolphot_convert_acs.py --f ../{out_dir}/{region}/{filt_n}/data.fits --c True --ra {ra} --dec {dec} --radius {d}")
         
         # Removing copy
         os.remove(f"../{out_dir}/{region}/{filt_n}/data.fits")
@@ -121,16 +126,16 @@ class Base():
         os.system(f"calcsky ../{out_dir}/{region}/{filt_n}/data_conv 15 35 4 2.25 2.00")
   
         # Editing DOLPHOT parameter file
-        with open("../params/acs_dolphot.param") as f:
+        with open("{params}/acs_dolphot.param") as f:
             dat = f.readlines()
   
         dat[4] = f'img1_file = ../{out_dir}/{region}/{filt_n}/data_conv            #image 1\n'
   
-        with open("../params/acs_dolphot.param", 'w', encoding='utf-8') as f:
+        with open("{params}/acs_dolphot.param", 'w', encoding='utf-8') as f:
             f.writelines(dat)
   
         # Running DOLPHOT
-        os.system(f"dolphot ../{out_dir}/{region}/{filt_n}/out -p../params/acs_dolphot.param")
+        os.system(f"dolphot ../{out_dir}/{region}/{filt_n}/out -p{params}/acs_dolphot.param")
   
         # Filtering Output photometric catalog
   
@@ -148,16 +153,16 @@ class Base():
             os.system(f"calcsky ../PHOT_OUTPUT_m50/{region}/{filt_n}/data_conv 15 35 4 2.25 2.00")
   
             # Editing DOLPHOT parameter file
-            with open("../params/acs_dolphot.param") as f:
+            with open("{params}/acs_dolphot.param") as f:
                 dat = f.readlines()
   
             dat[4] = f'img1_file = ../PHOT_OUTPUT_m50/{region}/{filt_n}/data_conv            #image 1\n'
   
-            with open("../params/acs_dolphot.param", 'w', encoding='utf-8') as f:
+            with open("{params}/acs_dolphot.param", 'w', encoding='utf-8') as f:
                 f.writelines(dat)
   
             # Running DOLPHOT
-            os.system(f"dolphot ../PHOT_OUTPUT_m50/{region}/{filt_n}/out -p../params/acs_dolphot.param")
+            os.system(f"dolphot ../PHOT_OUTPUT_m50/{region}/{filt_n}/out -p{params}/acs_dolphot.param")
                 # Filtering Output photometric catalog
   
             filter_phot('PHOT_OUTPUT_m50', region, filt_n)
@@ -191,7 +196,7 @@ class Base():
         os.system(f"wfc3mask ../{out_dir}/{region}/{filt_n}/data.fits")
   
         # Generating cutout
-        os.system(f"python ../scripts/dolphot_convert_wfc3.py --f ../{out_dir}/{region}/{filt_n}/data.fits --c True --ra {ra} --dec {dec} --radius {d}")
+        os.system(f"python {scripts}/dolphot_convert_wfc3.py --f ../{out_dir}/{region}/{filt_n}/data.fits --c True --ra {ra} --dec {dec} --radius {d}")
         
         # Removing copy
         os.remove(f"../{out_dir}/{region}/{filt_n}/data.fits")
@@ -200,16 +205,16 @@ class Base():
         os.system(f"calcsky ../{out_dir}/{region}/{filt_n}/data_conv 15 35 4 2.25 2.00")
   
         # Editing DOLPHOT parameter file
-        with open("../params/wfc3_dolphot.param") as f:
+        with open("{params}/wfc3_dolphot.param") as f:
             dat = f.readlines()
   
         dat[4] = f'img1_file = ../{out_dir}/{region}/{filt_n}/data_conv            #image 1\n'
   
-        with open("../params/wfc3_dolphot.param", 'w', encoding='utf-8') as f:
+        with open("{params}/wfc3_dolphot.param", 'w', encoding='utf-8') as f:
             f.writelines(dat)
   
         # Running DOLPHOT
-        os.system(f"dolphot ../{out_dir}/{region}/{filt_n}/out -p../params/wfc3_dolphot.param")
+        os.system(f"dolphot ../{out_dir}/{region}/{filt_n}/out -p{params}/wfc3_dolphot.param")
   
         # Filtering Output photometric catalog
   
@@ -227,16 +232,16 @@ class Base():
             os.system(f"calcsky ../PHOT_OUTPUT_m50/{region}/{filt_n}/data_conv 15 35 4 2.25 2.00")
   
             # Editing DOLPHOT parameter file
-            with open("../params/wfc3_dolphot.param") as f:
+            with open("{params}/wfc3_dolphot.param") as f:
                 dat = f.readlines()
   
             dat[4] = f'img1_file = ../PHOT_OUTPUT_m50/{region}/{filt_n}/data_conv            #image 1\n'
   
-            with open("../params/wfc3_dolphot.param", 'w', encoding='utf-8') as f:
+            with open("{params}/wfc3_dolphot.param", 'w', encoding='utf-8') as f:
                 f.writelines(dat)
   
             # Running DOLPHOT
-            os.system(f"dolphot ../PHOT_OUTPUT_m50/{region}/{filt_n}/out -p../params/wfc3_dolphot.param")
+            os.system(f"dolphot ../PHOT_OUTPUT_m50/{region}/{filt_n}/out -p{params}/wfc3_dolphot.param")
             # Filtering Output photometric catalog
   
             filter_phot('PHOT_OUTPUT_m50', region, filt_n)
