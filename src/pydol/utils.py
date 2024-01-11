@@ -18,11 +18,12 @@ Av_dict = {
             'f200w': 0.195,
           }
 
-def gen_CMD(filt1='f115w', filt2='f150w',name=None, Av=0.19, r=333, r_in=None, r_out=None, dismod=29.95, xlims=[-0.5,2.5], ylims=[18,28],label=3, met=0.02,
+def gen_CMD(filt1='f115w', filt2='f150w',name=None, Av=0.19, r=333, r_in=None, 
+            r_out=None, dismod=29.95, xlims=[-0.5,2.5], ylims=[18,28],label=3, met=0.02,
            cmd=None, out_dir='.', Av_ = 3, Av_x=2, Av_y=19, mag_err_lim=0.2,
            gen_kde=False, add_ref=False, plot_regions=['bubble'],add_ext='',
-           ra_col = 'ra_1', dec_col= 'dec_1',regions_dict={},
-           comp_flag=False, ref_xpos=-0.25, ages=[7.,8.,9.]):
+           ra_col = 'ra_1', dec_col= 'dec_1',regions={},
+           ref_xpos=-0.25, ages=[7.,8.,9.]):
     
     if met is not None:
         cmd = cmd[cmd['Zini']==met]
@@ -55,8 +56,8 @@ def gen_CMD(filt1='f115w', filt2='f150w',name=None, Av=0.19, r=333, r_in=None, r
         AF1 =  Av_dict[filt1]*Av
         AF2 =  Av_dict[filt2]*Av
         
-        ra_cen = regions_dict[region][ra_col]
-        dec_cen = regions_dict[region][dec_col]
+        ra_cen = regions[region]['ra']
+        dec_cen = regions[region]['dec']
         
         tab_bub['r'] = angular_separation(tab_bub[ra_col]*u.deg,tab_bub[dec_col]*u.deg,
                                           ra_cen*u.deg, dec_cen*u.deg).to(u.arcsec).value
