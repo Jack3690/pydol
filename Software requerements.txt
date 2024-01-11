@@ -1,3 +1,0 @@
-1. PSFex
-2. Source-extractor
-3. DOLPHOT

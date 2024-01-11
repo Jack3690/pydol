@@ -1,17 +1,18 @@
 import os
-from .simulation import sim_stars
-from .catalog import filter_phot, comp_fit, comp_base
+from .simulation import sim_stars, comp_fit, comp_base
+from .catalog import filter_phot
 import pandas as pd
+import numpy as np
 
 class Base():
-  def __init__(self, self.dict_images={}, regions={}):
+  def __init__(self, dict_images={}, regions={}):
     self.regions = {}
     self.dict_images = {}
 
   def nircam_phot(self, out_dir, region='bubble', filt_n='F115W', d=50, comp=True, 
                skip_phot=False):
   
-    ra, dec = self.regions[region]['ra'], regions[region]['dec']
+    ra, dec = self.regions[region]['ra'], self.regions[region]['dec']
   
     det_n = 'NRCB3'
     
@@ -92,7 +93,7 @@ class Base():
   def acs_phot(self, out_dir, region='bubble', filt_n='F435W', d=50, comp=True,
              skip_phot=False):
   
-    ra, dec = self.regions[region]['ra'], regions[region]['dec']
+    ra, dec = self.regions[region]['ra'], self.regions[region]['dec']
   
     det_n = 'WFC'
     input_path = self.dict_images[det_n][filt_n]['images'][0]
@@ -172,7 +173,7 @@ class Base():
   def wfc3_phot(self, out_dir, region='bubble', filt_n='F275W', d=50, comp=True,
              skip_phot=False):
   
-    ra, dec = self.regions[region]['ra'], regions[region]['dec']
+    ra, dec = self.regions[region]['ra'], self.regions[region]['dec']
     det_n = 'UVIS'
     input_path = self.dict_images[det_n][filt_n]['images'][0]
     

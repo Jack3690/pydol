@@ -1,5 +1,6 @@
 from .dolphot import Base
 from .data import jwst_data, hst_data
+from .catalog import generate_jwst_color, generate_acs_color, generate_wfc3_color
 
 class pydol(Base):
   def __init__(self, in_dir='.', regions={}, filters=['F115W'],
@@ -28,9 +29,6 @@ class pydol(Base):
     self._nircam_filters = ['F115W','F150W', 'F200W']
     self._acs_filters = ['F435W', 'F555W', 'F814W']
     self._wfc3_filters = ['F275W', 'F336W']
-                    self._nircam_filters = list(dict_images['NRCB3'].keys())
-    self._acs_filters = list(dict_images['WFC'].keys())
-    self._wfc3_filters = list(dict_images['UVIS'].keys())
   
     self.nircam = []
     self.acs = []
