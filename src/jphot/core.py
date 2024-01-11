@@ -1,7 +1,7 @@
 from .dolphot import Base
 from .data import jwst_data, hst_data
 
-class jphot(Base):
+class pydol(Base):
   def __init__(self, in_dir='.', regions={}, filters=['F115W'],
                inputs= ['JWST', 'HST'], 
                jwst_ext='i2d.fits', hst_ext='drc.fits', show_filters=False):
