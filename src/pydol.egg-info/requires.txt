@@ -1,0 +1,5 @@
+matplotlib
+astropy
+photutils
+numpy
+insist-pista
