@@ -8,10 +8,10 @@ setup(
         author='Avinash CK',
         author_email='avinash@inaoep.mx',
         license='BSD 2-clause',
-        package_dir={'': 'src'},
-        packages=find_packages(where='src'),
+        package_dir={'': '.'},
+        packages=find_packages(where='.'),
         install_requires=['matplotlib', 'astropy', 'photutils',
-                          'numpy', 'insist-pista'],
+                          'numpy', ],
         include_package_data=True,
         package_data={'': ['pydol/data/*']},
         classifiers=[
