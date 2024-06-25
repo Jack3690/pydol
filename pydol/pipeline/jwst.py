@@ -9,9 +9,9 @@ import jwst
 import multiprocessing as mp
 from pathlib import Path
 
-crds_dir = Path(__file__).parent.joinpath('CRDS')
-os.makedirs(crds_dir + '/crds_cache/', exist_ok=True)
-os.environ['CRDS_PATH'] = f'{crds_dir}/crds_cache/'
+crds_dir = Path(__file__).parent.joinpath('CRDS')/'crds_cache'
+os.makedirs(crds_dir, exist_ok=True)
+os.environ['CRDS_PATH'] = str(crds_dir)
 os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
 client.set_crds_server("https://jwst-crds.stsci.edu")
 

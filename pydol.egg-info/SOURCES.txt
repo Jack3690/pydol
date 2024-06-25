@@ -1,0 +1,12 @@
+MANIFEST.in
+setup.cfg
+setup.py
+./pydol/__init__.py
+./pydol/pipeline/__init__.py
+./pydol/pipeline/hst.py
+./pydol/pipeline/jwst.py
+pydol.egg-info/PKG-INFO
+pydol.egg-info/SOURCES.txt
+pydol.egg-info/dependency_links.txt
+pydol.egg-info/requires.txt
+pydol.egg-info/top_level.txt
