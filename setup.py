@@ -11,11 +11,11 @@ setup(
         package_dir={'': '.'},
         packages=find_packages(where='.'),
         install_requires=['matplotlib', 'astropy', 'photutils',
-                          'numpy', ],
+                          'numpy', 'jwst','crds'],
         include_package_data=True,
         package_data={'': ['pydol/data/*']},
         classifiers=[
-            'Development Status :: 3 - Alpha',
+            'Development Status :: 1 - Planning',
             'Intended Audience :: Science/Research',
             'License :: OSI Approved :: BSD License',
             'Operating System :: OS Independent',

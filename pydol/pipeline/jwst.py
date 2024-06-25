@@ -1,6 +1,5 @@
 from jwst.pipeline import Detector1Pipeline, Image2Pipeline, Image3Pipeline
 import jwst.associations
-from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 from glob import glob
 
