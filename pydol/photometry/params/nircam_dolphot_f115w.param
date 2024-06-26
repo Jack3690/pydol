@@ -2,16 +2,15 @@ Nimg = 8                #number of images (int)
 #
 # The following parameters can be specified for individual images (img1_...)
 #  or applied to all images (img_...)
-img0_file = ../data/stage2/f150w_i2d
-img1_file = ../data/stage2/nrcb4400500001/data           #image 1
-img2_file = ../data/stage2/nrcb4400500002/data           #image 2
-img3_file = ../data/stage2/nrcb4400500003/data           #image 3
-img4_file = ../data/stage2/nrcb4400500004/data           #image 4
-img5_file = ../data/stage2/nrcb4400600001/data           #image 5
-img6_file = ../data/stage2/nrcb4400600002/data           #image 6
-img7_file = ../data/stage2/nrcb4400600003/data           #image 7
-img8_file = ../data/stage2/nrcb4400600004/data           #image 8
-img_shift = 0 0         #shift relative to reference
+img0_file = ../data/stage2/f115w_3904_i2d
+img1_file = ../data/stage2/f115w/b4/jw01783904003_02101_00001_nrcb4_cal/data           #image 1
+img2_file = ../data/stage2/f115w/b4/jw01783904003_02101_00002_nrcb4_cal/data           #image 2
+img3_file = ../data/stage2/f115w/b4/jw01783904003_02101_00003_nrcb4_cal/data           #image 3
+img4_file = ../data/stage2/f115w/b4/jw01783904003_02101_00004_nrcb4_cal/data           #image 4
+img5_file = ../data/stage2/f115w/b4/jw01783904004_02101_00001_nrcb4_cal/data           #image 5
+img6_file = ../data/stage2/f115w/b4/jw01783904004_02101_00002_nrcb4_cal/data           #image 6
+img7_file = ../data/stage2/f115w/b4/jw01783904004_02101_00003_nrcb4_cal/data           #image 7
+img8_file = ../data/stage2/f115w/b4/jw01783904004_02101_00004_nrcb4_cal/data           #image 8
 img_xform = 1 0 0       #scale, distortion, and rotation
 img_PSFa = 3 0 0 0 0 0  #PSF XX term (flt)
 img_PSFb = 3 0 0 0 0 0  #PSF YY term (flt)
@@ -22,7 +21,7 @@ img_RSky =  15 35         #radii defining sky annulus (flt>=RAper+0.5)
 img_RSky2 =  4 10 
 img_RPSF = 15           #PSF size (int>0)
 img_aprad = 20          #radius for aperture correction
-img_apsky = 30 50       #sky annulus for aperture correction
+img_apsky = 20 35       #sky annulus for aperture correction
 #
 # The following photometers affect the finding and measurement of stars
 photsec =               #section: group, chip, (X,Y)0, (X,Y)1
@@ -44,7 +43,7 @@ Zero = 25.0             #zeropoint for 1 DN/s (flt)
 PosStep = 0.25          #search step for position iterations (flt)
 dPosMax = 3.0           #maximum single-step in position iterations (flt)
 RCombine = 1.5          #minimum separation for two stars for cleaning (flt)
-SigPSF = 5              #min S/N for psf parameter fits (flt)
+SigPSF = 5.0              #min S/N for psf parameter fits (flt)
 PSFStep = 0.25          #stepsize for PSF
 MinS = 1.0              #minimum FWHM for good star (flt)
 MaxS = 9.0              #maximum FWHM for good star (flt)
@@ -70,10 +69,7 @@ psfoff = 0.0            #coordinate offset (PSF system - dolphot system)
 ApCor = 1               #find/make aperture corrections? (int 0=no,1=yes)
 SubPixel = 1            #subpixel PSF calculation (int>0)
 FakeStars =             #file with fake star input data
-FakeOut =               #file with fake star output data (default=phot.fake)
-FakeMatch = 3.0         #maximum separation between input and recovered star (flt>0)
-FakePSF = 2.0           #assumed PSF FWHM for fake star matching
-FakeStarPSF = 1         #use PSF residuals in fake star tests? (int 0=no,1=yes)
+FakeOut =    
 RandomFake = 1          #apply Poisson noise to fake stars? (int 0=no,1=yes)
 FakePad = 0             #minimum distance of fake star from any chip edge to be used
 UsePhot =               #if defined, use alignment, PSF, and aperture corr from photometry
