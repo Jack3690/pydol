@@ -1,3 +1,2 @@
-recursive-include src *.py
-recursive-include src *.param
-recursive-include src/pydol/data *
+recursive-include src/pydol/ *.py
+recursive-include src/pydol/ *

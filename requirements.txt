@@ -1,9 +1,6 @@
-voila
 matplotlib
 numpy
-ipywidgets
 seaborn
 astropy
 scipy
-photutils
 insist-pista
