@@ -22,6 +22,8 @@ class jpipe():
             Parameters
             ----------
         """
+        if len(input_files)<1:
+            raise Exception("Input files list CANNOT be empty!")
         self.input_files = input_files
         self.out_dir = out_dir
         os.makedirs(out_dir + '/data/stage1/', exist_ok=True)
