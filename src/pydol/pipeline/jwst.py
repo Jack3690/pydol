@@ -60,7 +60,7 @@ class jpipe():
             if not os.path.exists(o):
                 self.stage1(f)
 
-        rate_files = glob(self.out_dir + '/data/stage2/*_rate.fits')
+        rate_files = glob(self.out_dir + '/data/stage1/*_rate.fits')
         rate_files_ = []
         for f in rate_files:
             o = f.replace('stage1','stage2')
