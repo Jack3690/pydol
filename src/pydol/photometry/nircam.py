@@ -8,7 +8,7 @@ import multiprocessing as mp
 from pathlib import Path
 import subprocess
 
-sys_func = os.system
+#sys_func = os.system
 sys_func = os.subprocess.run
 
 param_dir = str(Path(__file__).parent.joinpath('params'))
