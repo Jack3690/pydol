@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 
 #sys_func = os.system
-sys_func = os.subprocess.run
+sys_func = subprocess.run
 
 param_dir = str(Path(__file__).parent.joinpath('params'))
 script_dir =str(Path(__file__).parent.joinpath('scripts'))
