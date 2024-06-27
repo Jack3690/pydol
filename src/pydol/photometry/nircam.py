@@ -6,12 +6,16 @@ from astropy.io import fits
 import numpy as np
 import multiprocessing as mp
 from pathlib import Path
+import subprocess
+
+sys_func = os.system
+sys_func = os.subprocess.run
 
 param_dir = str(Path(__file__).parent.joinpath('params'))
 script_dir =str(Path(__file__).parent.joinpath('scripts'))
 
 def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
-    os.system(f"nircammask {drz_path}.fits") 
+    sys_func(f"nircammask {drz_path}.fits") 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -23,15 +27,15 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
         if not os.path.exists(f'{output_dir}/{out_dir}'):
             os.mkdir(f'{output_dir}/{out_dir}')
         if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
-            os.system(f"cp {f} {output_dir}/{out_dir}/data.fits")
+            sys_func(f"cp {f} {output_dir}/{out_dir}/data.fits")
 
         exps.append(f'{output_dir}/{out_dir}')
 
     # Applying NIRCAM Mask
     for f in exps:
         if not os.path.exists(f"{f}/data.sky.fits"):
-            os.system(f"nircammask {f}/data.fits")
-            os.system(f"calcsky {f}/data 10 25 2 2.25 2.00")
+            sys_func(f"nircammask {f}/data.fits")
+            sys_func(f"calcsky {f}/data 10 25 2 2.25 2.00")
 
     # Preparing Parameter file DOLPHOT NIRCAM
     with open(f"{param_dir}/nircam_dolphot.param") as f:
@@ -49,11 +53,11 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
         
     if not os.path.exists(f"{output_dir}/{name}_photometry.fits"):
         # Running DOLPHOT NIRCAM
-        os.system(f"dolphot {output_dir}/out -p{param_dir}/nircam_dolphot_{out_id}.param")
+        sys_func(f"dolphot {output_dir}/out -p{param_dir}/nircam_dolphot_{out_id}.param")
 
     # Generating Astropy FITS Table
    
-    os.system(f"python {script_dir}to_table.py --o {name}_photometry --n {len(exps)} --f {output_dir}/out")
+    sys_func(f"python {script_dir}to_table.py --o {name}_photometry --n {len(exps)} --f {output_dir}/out")
 
     phot_table = Table.read(f"{output_dir}/{name}_photometry.fits")
     phot_table.rename_columns(['mag_vega'],[f'mag_vega_F200W'])
