@@ -16,11 +16,26 @@ os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
 client.set_crds_server("https://jwst-crds.stsci.edu")
 
 class jpipe():
-    def __init__(self, input_files='.', out_dir='.',
-                 crds_context="jwst_1200.pmap"):
+    def __init__(self, input_files=[], out_dir='.',
+                 crds_context="jwst_1241.pmap"):
         """
             Parameters
             ----------
+            input_files: list,
+                         Input list of level 0 '_uncal.fits' files. 
+                         Recommended: /data/stage0/
+            out_dir: str,
+                     Output directory. 
+                     Recommended: The directory that contains /data/stage0/
+                     Pipeline will create /data/stage1/ and /data/stage2/
+                     
+            crds_context: str,
+                          Reference context for JWST pipeline from CRDS.
+
+              Returns
+              -------
+                  None
+                        
         """
         if len(input_files)<1:
             raise Exception("Input files list CANNOT be empty!")
@@ -31,6 +46,15 @@ class jpipe():
         os.environ["CRDS_CONTEXT"] = crds_context
 
     def stage1(self, filename):
+        """
+            Parameters
+            ----------
+            filename: str,
+                      path to the level 0 "_uncal.fits" file
+            Returns
+            -------
+                None
+        """
         # Instantiate the pipeline
         img1 = Detector1Pipeline()
         # Specify where the output should go
@@ -43,6 +67,15 @@ class jpipe():
         img1(filename)
         
     def stage2(self, filename):
+        """
+            Parameters
+            ----------
+            filename: str,
+                      path to the level 1 "_rate.fits" file
+            Returns
+            -------
+                None
+        """
         # Instantiate the pipeline
         img2 = Image2Pipeline()
         # Specify where the output should go
@@ -53,6 +86,10 @@ class jpipe():
         img2(filename)
 
     def __call__(self):
+        """
+            Runs the JWST Stage 1 and Stage 2 pipeline for generating
+            '_cal.fits' files
+        """
         uncal_files = [i for i in self.input_files if 'uncal' in i ]
         for f in uncal_files:
             o = f.replace('stage0','stage1')
