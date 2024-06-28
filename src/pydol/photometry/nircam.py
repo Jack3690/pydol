@@ -12,7 +12,7 @@ param_dir = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
 def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
-    subprocess.run(["nircammask", f"{drz_path}.fits"], shell=True) 
+    subprocess.run([f"nircammask {drz_path}.fits"], shell=True) 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -24,16 +24,19 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
         if not os.path.exists(f'{output_dir}/{out_dir}'):
             os.mkdir(f'{output_dir}/{out_dir}')
         if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
-            subprocess.run(["cp", f"{f}", f"{output_dir}/{out_dir}/data.fits"], shell=True)
+            subprocess.run([f"cp {f} {output_dir}/{out_dir}/data.fits"], 
+                                 shell=True)
 
         exps.append(f'{output_dir}/{out_dir}')
 
     # Applying NIRCAM Mask
     for f in exps:
         if not os.path.exists(f"{f}/data.sky.fits"):
-            subprocess.run(["nircammask", f"{f}/data.fits"], shell=True)
-            subprocess.run(["calcsky", f"{f}/data", "10", "25", "2", "2.25", "2.00"], shell=True)
-
+          out = subprocess.run([f"nircammask {f}/data.fits"]
+                                 ,shell=True)
+          
+          out = subprocess.run([f"calcsky {f}/data 10 25 2 2.25 2.00"]
+                               , shell=True, capture_output=True)
     # Preparing Parameter file DOLPHOT NIRCAM
     with open(f"{param_dir}/nircam_dolphot.param") as f:
                 dat = f.readlines()
@@ -44,18 +47,21 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
     for i,f in enumerate(exps):
         dat[5+i] = f'img{i+1}_file = {f}/data           #image {i+1}\n'
 
-    out_id = np.random.random()
+    out_id = name
     with open(f"{param_dir}/nircam_dolphot_{out_id}.param", 'w', encoding='utf-8') as f:
         f.writelines(dat)
         
     if not os.path.exists(f"{output_dir}/{name}_photometry.fits"):
         # Running DOLPHOT NIRCAM
-         subprocess.run(["dolphot", f"{output_dir}/out", f"-p{param_dir}/nircam_dolphot_{out_id}.param"], shell=True)
-
+        p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_dir}/nircam_dolphot_{out_id}.param"]
+                            , stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    while (line := p.stdout.readline()) != "":
+      print(line)
     # Generating Astropy FITS Table
    
-    subprocess.run(["python", f"{script_dir}to_table.py", "--o", f"{name}_photometry", "--n", f"{len(exps)}", "--f", f"{output_dir}/out"])
-
+    out = subprocess.run([f"python {script_dir}/to_table.py --o {name}_photometry --n {len(exps)} --f {output_dir}/out"],
+                   shell=True)
+   
     phot_table = Table.read(f"{output_dir}/{name}_photometry.fits")
     phot_table.rename_columns(['mag_vega'],[f'mag_vega_F200W'])
 
@@ -80,10 +86,10 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
                                 (phot_table['obj_crowd']    <=  0.5) &
                                 (phot_table['flags']        <=    2) &
                                 (phot_table['type']         <=    2))]
-    print('NIRCAM SHORT')
     phot_table.write(f'{output_dir}/{name}_photometry.fits', overwrite=True)
     phot_table1.write(f'{output_dir}/{name}_photometry_filt.fits', overwrite=True)
     phot_table2.write(f'{output_dir}/{name}_photometry_rej.fits', overwrite=True)
+    print('NIRCAM Stellar Photometry Completed!')
     
 
 
