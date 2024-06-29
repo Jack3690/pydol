@@ -35,7 +35,7 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.', cat_name
     if len(cal_files)<0:
         raise Exception("cal_files cannot be EMPTY")
                         
-    subprocess.run([f"nircammask {drz_path}.fits"], shell=True,cat_name='') 
+    subprocess.run([f"nircammask {drz_path}.fits"], shell=True) 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
