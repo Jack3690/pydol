@@ -3,6 +3,7 @@ Nimg = 8                #number of images (int)
 # The following parameters can be specified for individual images (img1_...)
 #  or applied to all images (img_...)
 img0_file = ../data/stage2/f115w_3904_i2d
+img1_file = ../data/stage2/f115w_3904_i2d
 img_xform = 1 0 0       #scale, distortion, and rotation
 img_PSFa = 3 0 0 0 0 0  #PSF XX term (flt)
 img_PSFb = 3 0 0 0 0 0  #PSF YY term (flt)
