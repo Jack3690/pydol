@@ -11,8 +11,31 @@ import subprocess
 param_dir = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
-def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
-    subprocess.run([f"nircammask {drz_path}.fits"], shell=True) 
+def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.', cat_name=''):
+    """
+        Parameters
+        ---------
+        cal_files: list,
+                    list of paths to JWST NIRCAM level 2 _cal.fits files
+        filter: str,
+                name of the NIRCAM filter being processed
+        output_dir: str,
+                    path to output directory.
+                    Recommended: /photometry/
+        drz_path: str,
+                  path to level 3 drizzled image (_i2d.fits) image.
+                  It is recommended to be inside /photometry/
+        cat_name: str,
+                  Output photometry catalogs will have prefix filter + cat_name
+
+        Return
+        ------
+        None
+    """
+    if len(cal_files)<0:
+        raise Exception("cal_files cannot be EMPTY")
+                        
+    subprocess.run([f"nircammask {drz_path}.fits"], shell=True,cat_name='') 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -47,11 +70,11 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
     for i,f in enumerate(exps):
         dat[5+i] = f'img{i+1}_file = {f}/data           #image {i+1}\n'
 
-    out_id = name
+    out_id = filter + cat_name
     with open(f"{param_dir}/nircam_dolphot_{out_id}.param", 'w', encoding='utf-8') as f:
         f.writelines(dat)
         
-    if not os.path.exists(f"{output_dir}/{name}_photometry.fits"):
+    if not os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
         # Running DOLPHOT NIRCAM
         p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_dir}/nircam_dolphot_{out_id}.param"]
                             , stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -59,11 +82,11 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
           print(line)
     # Generating Astropy FITS Table
    
-    out = subprocess.run([f"python {script_dir}/to_table.py --o {name}_photometry --n {len(exps)} --f {output_dir}/out"],
+    out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --n {len(exps)} --f {output_dir}/out"],
                    shell=True)
    
-    phot_table = Table.read(f"{output_dir}/{name}_photometry.fits")
-    phot_table.rename_columns(['mag_vega'],[f'mag_vega_{name.upper()}'])
+    phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
+    phot_table.rename_columns(['mag_vega'],[f'mag_vega_{filter.upper()}'])
 
     # Assingning RA-Dec using reference image
     hdu = fits.open(f"{drz_path}.fits")[1]
@@ -86,10 +109,7 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
                                 (phot_table['obj_crowd']    <=  0.5) &
                                 (phot_table['flags']        <=    2) &
                                 (phot_table['type']         <=    2))]
-    phot_table.write(f'{output_dir}/{name}_photometry.fits', overwrite=True)
-    phot_table1.write(f'{output_dir}/{name}_photometry_filt.fits', overwrite=True)
-    phot_table2.write(f'{output_dir}/{name}_photometry_rej.fits', overwrite=True)
+    phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
+    phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
+    phot_table2.write(f'{output_dir}/{out_id}_photometry_rej.fits', overwrite=True)
     print('NIRCAM Stellar Photometry Completed!')
-    
-
-
