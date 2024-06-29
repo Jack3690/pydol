@@ -55,15 +55,15 @@ def nircam_phot(cal_files, name='f200w',output_dir='.', drz_path='.', ):
         # Running DOLPHOT NIRCAM
         p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_dir}/nircam_dolphot_{out_id}.param"]
                             , stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    while (line := p.stdout.readline()) != "":
-      print(line)
+        while (line := p.stdout.readline()) != "":
+          print(line)
     # Generating Astropy FITS Table
    
     out = subprocess.run([f"python {script_dir}/to_table.py --o {name}_photometry --n {len(exps)} --f {output_dir}/out"],
                    shell=True)
    
     phot_table = Table.read(f"{output_dir}/{name}_photometry.fits")
-    phot_table.rename_columns(['mag_vega'],[f'mag_vega_F200W'])
+    phot_table.rename_columns(['mag_vega'],[f'mag_vega_{name.upper()}'])
 
     # Assingning RA-Dec using reference image
     hdu = fits.open(f"{drz_path}.fits")[1]
