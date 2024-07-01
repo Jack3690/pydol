@@ -69,7 +69,7 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.', cat_name
     dat[5] = ''
 
     for i,f in enumerate(exps):
-        dat[5] += f'img{i+1}_file = {f}/data           #image {i+1}\n'
+        dat[5] += f'img{i+1}_file = {f}data           #image {i+1}\n'
 
     out_id = filter + cat_name
     with open(f"{param_dir}/nircam_dolphot_{out_id}.param", 'w', encoding='utf-8') as f:
