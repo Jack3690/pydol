@@ -66,6 +66,7 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.', cat_name
 
     dat[0] = f'Nimg = {len(exps)}                #number of images (int)\n'
     dat[4] = f'img0_file = {drz_path}\n'
+    dat[5] = ''
 
     for i,f in enumerate(exps):
         dat[5] += f'img{i+1}_file = {f}/data           #image {i+1}\n'
