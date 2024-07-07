@@ -86,31 +86,31 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.', cat_name
         out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --n {len(exps)} --f {output_dir}/out"],
                        shell=True)
    
-    phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
-    phot_table.rename_columns(['mag_vega'],[f'mag_vega_{filter.upper()}'])
-
-    # Assingning RA-Dec using reference image
-    hdu = fits.open(f"{drz_path}.fits")[1]
-
-    wcs = WCS(hdu.header)
-    positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
-
-    coords = np.array(wcs.pixel_to_world_values(positions))
-
-    phot_table['ra']  = coords[:,0]
-    phot_table['dec'] = coords[:,1]
-
-    # Filtering stellar photometry catalog using Warfield et.al (2023)
-    phot_table1 = phot_table[ (phot_table['sharpness']**2   <= 0.01) &
-                                (phot_table['obj_crowd']    <=  0.5) &
-                                (phot_table['flags']        <=    2) &
-                                (phot_table['type']         <=    2)]
-
-    phot_table2 = phot_table[ ~((phot_table['sharpness']**2 <= 0.01) &
-                                (phot_table['obj_crowd']    <=  0.5) &
-                                (phot_table['flags']        <=    2) &
-                                (phot_table['type']         <=    2))]
-    phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
-    phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
-    phot_table2.write(f'{output_dir}/{out_id}_photometry_rej.fits', overwrite=True)
+        phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
+        phot_table.rename_columns(['mag_vega'],[f'mag_vega_{filter.upper()}'])
+    
+        # Assingning RA-Dec using reference image
+        hdu = fits.open(f"{drz_path}.fits")[1]
+    
+        wcs = WCS(hdu.header)
+        positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
+    
+        coords = np.array(wcs.pixel_to_world_values(positions))
+    
+        phot_table['ra']  = coords[:,0]
+        phot_table['dec'] = coords[:,1]
+    
+        # Filtering stellar photometry catalog using Warfield et.al (2023)
+        phot_table1 = phot_table[ (phot_table['sharpness']**2   <= 0.01) &
+                                    (phot_table['obj_crowd']    <=  0.5) &
+                                    (phot_table['flags']        <=    2) &
+                                    (phot_table['type']         <=    2)]
+    
+        phot_table2 = phot_table[ ~((phot_table['sharpness']**2 <= 0.01) &
+                                    (phot_table['obj_crowd']    <=  0.5) &
+                                    (phot_table['flags']        <=    2) &
+                                    (phot_table['type']         <=    2))]
+        phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
+        phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
+        phot_table2.write(f'{output_dir}/{out_id}_photometry_rej.fits', overwrite=True)
     print('NIRCAM Stellar Photometry Completed!')
