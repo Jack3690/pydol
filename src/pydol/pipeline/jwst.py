@@ -22,20 +22,20 @@ class jpipe():
             Parameters
             ----------
             input_files: list,
-                         Input list of level 0 '_uncal.fits' files. 
+                         Input list of level 0 '_uncal.fits' files.
                          Recommended: /data/stage0/
             out_dir: str,
-                     Output directory. 
+                     Output directory.
                      Recommended: The directory that contains /data/stage0/
                      Pipeline will create /data/stage1/ and /data/stage2/
-                     
+
             crds_context: str,
                           Reference context for JWST pipeline from CRDS.
 
               Returns
               -------
                   None
-                        
+
         """
         if len(input_files)<1:
             raise Exception("Input files list CANNOT be empty!")
@@ -43,6 +43,8 @@ class jpipe():
         self.out_dir = out_dir
         os.makedirs(out_dir + '/data/stage1/', exist_ok=True)
         os.makedirs(out_dir + '/data/stage2/', exist_ok=True)
+        os.makedirs(out_dir + '/data/stage3/', exist_ok=True)
+
         os.environ["CRDS_CONTEXT"] = crds_context
 
     def stage1(self, filename):
@@ -56,7 +58,9 @@ class jpipe():
                 None
         """
         # Instantiate the pipeline
-        img1 = Detector1Pipeline()
+        img1 = Detector1Pipeline()   
+        # Snowball Removal (M82 Group)
+        img1.jump.expand_large_events = True
         # Specify where the output should go
         img1.output_dir = self.out_dir + '/data/stage1/'
         # Save the final resulting _rate.fits files
@@ -65,7 +69,7 @@ class jpipe():
         img1.jump.maximum_cores = f'{mp.cpu_count()-1}'
         # Run the pipeline on an input list of files
         img1(filename)
-        
+
     def stage2(self, filename):
         """
             Parameters
@@ -85,11 +89,40 @@ class jpipe():
         # Run the pipeline on an input list of files
         img2(filename)
 
+        # TBD: Add 1/f noise subtraction 
+        #
+        #
+        #
+        #
+
+    def stage3(self, filenames):
+        """
+            Parameters
+            ----------
+            filename: str,
+                      list of paths to the level 2 "_cal.fits" files
+                      
+                      if a single file is provided only 
+                      resample and source_catalog steps will be applied.
+            Returns
+            -------
+                None
+        """
+        # Instantiate the pipeline
+        img3 = Image3Pipeline()
+        # Specify where the output should go
+        img3.output_dir = self.out_dir + '/data/stage3/'
+        # Save the final resulting _rate.fits files
+        img3.save_results = True
+        # Run the pipeline on an input list of files
+        img3(filenames)
+
     def __call__(self):
         """
-            Runs the JWST Stage 1 and Stage 2 pipeline for generating
-            '_cal.fits' files
+            Runs the JWST Stage 1, Stage 2, and Stage 3 pipeline for generating
+            '_crf.fits' files
         """
+        # Stage1
         uncal_files = [i for i in self.input_files if 'uncal' in i ]
         for f in uncal_files:
             o = f.replace('stage0','stage1')
@@ -98,15 +131,19 @@ class jpipe():
                 self.stage1(f)
 
         rate_files = glob(self.out_dir + '/data/stage1/*_rate.fits')
+
+        # Stage 2
         rate_files_ = []
         for f in rate_files:
             o = f.replace('stage1','stage2')
             o = o.replace('rate','cal')
             if not os.path.exists(o):
                 rate_files_.append(f)
-            
+
         if len(rate_files_)>0:
             with mp.Pool(mp.cpu_count()-1) as p:
                 p.map(self.stage2, rate_files_)
-
-
+                
+        # Stage 3
+        cal_files = glob(self.out_dir + '/data/stage2/*cal.fits')
+        self.stage3(cal_files)
