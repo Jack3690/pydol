@@ -146,4 +146,11 @@ class jpipe():
                 
         # Stage 3
         cal_files = glob(self.out_dir + '/data/stage2/*cal.fits')
-        self.stage3(cal_files)
+        cal_files_ = []
+        for f in cal_files:
+            o = f.replace('stage2','stage3')
+            o = o.replace('cal','crf')
+            if not os.path.exists(o):
+                cal_files_.append(f)
+        if len(cal_files_) < len(cal_files):
+            self.stage3(cal_files)
