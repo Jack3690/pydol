@@ -10,7 +10,12 @@ import multiprocessing as mp
 from pathlib import Path
 
 crds_dir = Path(__file__).parent.joinpath('CRDS')/'crds_cache'
-os.makedirs(crds_dir, exist_ok=True)
+
+if os.access(crds_dir,os.W_OK):
+    os.makedirs(crds_dir, exist_ok=True)
+else:
+    raise Exception(f"{crds_dir} is not WRITABLE")
+    
 os.environ['CRDS_PATH'] = str(crds_dir)
 os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
 client.set_crds_server("https://jwst-crds.stsci.edu")
@@ -41,9 +46,12 @@ class jpipe():
             raise Exception("Input files list CANNOT be empty!")
         self.input_files = input_files
         self.out_dir = out_dir
-        os.makedirs(out_dir + '/data/stage1/', exist_ok=True)
-        os.makedirs(out_dir + '/data/stage2/', exist_ok=True)
-        os.makedirs(out_dir + '/data/stage3/', exist_ok=True)
+        if os.access(out_dir,os.W_OK):
+            os.makedirs(out_dir + '/data/stage1/', exist_ok=True)
+            os.makedirs(out_dir + '/data/stage2/', exist_ok=True)
+            os.makedirs(out_dir + '/data/stage3/', exist_ok=True)
+        else:
+            raise Exception(f"{out_dir} is not WRITABLE")
 
         os.environ["CRDS_CONTEXT"] = crds_context
 
