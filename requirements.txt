@@ -1,6 +1,7 @@
+jwst
+crds
 matplotlib
 numpy
 seaborn
 astropy
 scipy
-insist-pista
