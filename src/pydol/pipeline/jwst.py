@@ -134,7 +134,7 @@ class jpipe():
         uncal_files = [i for i in self.input_files if 'uncal' in i ]
         [ self.stage1_pipeline(f) for f in uncal_files if not os.path.exists(f.replace('stage0', 'stage1').replace('uncal', 'rate')) ]
 
-        rate_files = glob(self.out_dir + '/data/stage1/*_rate.fits')
+        rate_files = [f.replace('stage0', 'stage1').replace('uncal', 'rate') for f in uncal_files]
 
         # Stage 2
         rate_files_ = [f for f in rate_files if not os.path.exists(f.replace('stage1', 'stage2').replace('rate', 'cal'))]
@@ -144,8 +144,8 @@ class jpipe():
                 p.map(self.stage2_pipeline, rate_files_)
                 
         # Stage 3
-        cal_files = glob(self.out_dir + '/data/stage2/*cal.fits')
+        cal_files = [f.replace('stage1', 'stage2').replace('rate', 'cal') for f in rate_files]
         cal_files_ = [f for f in cal_files if not os.path.exists(f.replace('stage2', 'stage3').replace('cal', 'crf'))]
 
-        if len(cal_files_) < len(cal_files):
+        if len(cal_files_) > 0:
             self.stage3_pipeline(cal_files)
