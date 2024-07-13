@@ -104,12 +104,14 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.', cat_name
         phot_table1 = phot_table[ (phot_table['sharpness']**2   <= 0.01) &
                                     (phot_table['obj_crowd']    <=  0.5) &
                                     (phot_table['flags']        <=    2) &
-                                    (phot_table['type']         <=    2)]
+                                    (phot_table['type']         <=    2) &
+                                    (phot_table['SNR']          >=    5)]
     
         phot_table2 = phot_table[ ~((phot_table['sharpness']**2 <= 0.01) &
                                     (phot_table['obj_crowd']    <=  0.5) &
                                     (phot_table['flags']        <=    2) &
-                                    (phot_table['type']         <=    2))]
+                                    (phot_table['type']         <=    2) &
+                                    (phot_table['SNR']          >=    5))]
         phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
         phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
         phot_table2.write(f'{output_dir}/{out_id}_photometry_rej.fits', overwrite=True)
