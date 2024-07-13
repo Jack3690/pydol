@@ -1,17 +1,6 @@
 pydol.pipeline package
 ======================
 
-Submodules
-----------
-
-pydol.pipeline.hst module
--------------------------
-
-.. automodule:: pydol.pipeline.hst
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pydol.pipeline.jwst module
 --------------------------
 
