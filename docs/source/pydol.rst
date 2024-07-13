@@ -7,10 +7,3 @@ pydol package
    pydol.photometry
    pydol.pipeline
 
-Module contents
----------------
-
-.. automodule:: pydol
-   :members:
-   :undoc-members:
-   :show-inheritance:
