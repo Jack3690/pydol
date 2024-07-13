@@ -10,7 +10,12 @@ import multiprocessing as mp
 from pathlib import Path
 
 crds_dir = Path(__file__).parent.joinpath('CRDS')/'crds_cache'
-os.makedirs(crds_dir, exist_ok=True)
+
+if os.access(crds_dir,os.W_OK):
+    os.makedirs(crds_dir, exist_ok=True)
+else:
+    raise Exception(f"{crds_dir} is not WRITABLE")
+    
 os.environ['CRDS_PATH'] = str(crds_dir)
 os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
 client.set_crds_server("https://jwst-crds.stsci.edu")
@@ -41,13 +46,16 @@ class jpipe():
             raise Exception("Input files list CANNOT be empty!")
         self.input_files = input_files
         self.out_dir = out_dir
-        os.makedirs(out_dir + '/data/stage1/', exist_ok=True)
-        os.makedirs(out_dir + '/data/stage2/', exist_ok=True)
-        os.makedirs(out_dir + '/data/stage3/', exist_ok=True)
+        if os.access(out_dir,os.W_OK):
+            os.makedirs(out_dir + '/data/stage1/', exist_ok=True)
+            os.makedirs(out_dir + '/data/stage2/', exist_ok=True)
+            os.makedirs(out_dir + '/data/stage3/', exist_ok=True)
+        else:
+            raise Exception(f"{out_dir} is not WRITABLE")
 
         os.environ["CRDS_CONTEXT"] = crds_context
 
-    def stage1(self, filename):
+    def stage1_pipeline(self, filename):
         """
             Parameters
             ----------
@@ -70,7 +78,7 @@ class jpipe():
         # Run the pipeline on an input list of files
         img1(filename)
 
-    def stage2(self, filename):
+    def stage2_pipeline(self, filename):
         """
             Parameters
             ----------
@@ -95,7 +103,7 @@ class jpipe():
         #
         #
 
-    def stage3(self, filenames):
+    def stage3_pipeline(self, filenames):
         """
             Parameters
             ----------
@@ -124,33 +132,20 @@ class jpipe():
         """
         # Stage1
         uncal_files = [i for i in self.input_files if 'uncal' in i ]
-        for f in uncal_files:
-            o = f.replace('stage0','stage1')
-            o = o.replace('uncal','rate')
-            if not os.path.exists(o):
-                self.stage1(f)
+        [ self.stage1_pipeline(f) for f in uncal_files if not os.path.exists(f.replace('stage0', 'stage1').replace('uncal', 'rate')) ]
 
         rate_files = glob(self.out_dir + '/data/stage1/*_rate.fits')
 
         # Stage 2
-        rate_files_ = []
-        for f in rate_files:
-            o = f.replace('stage1','stage2')
-            o = o.replace('rate','cal')
-            if not os.path.exists(o):
-                rate_files_.append(f)
-
+        rate_files_ = [f for f in rate_files if not os.path.exists(f.replace('stage1', 'stage2').replace('rate', 'cal'))]
+        
         if len(rate_files_)>0:
             with mp.Pool(mp.cpu_count()-1) as p:
-                p.map(self.stage2, rate_files_)
+                p.map(self.stage2_pipeline, rate_files_)
                 
         # Stage 3
         cal_files = glob(self.out_dir + '/data/stage2/*cal.fits')
-        cal_files_ = []
-        for f in cal_files:
-            o = f.replace('stage2','stage3')
-            o = o.replace('cal','crf')
-            if not os.path.exists(o):
-                cal_files_.append(f)
+        cal_files_ = [f for f in cal_files if not os.path.exists(f.replace('stage2', 'stage3').replace('cal', 'crf'))]
+
         if len(cal_files_) < len(cal_files):
-            self.stage3(cal_files)
+            self.stage3_pipeline(cal_files)

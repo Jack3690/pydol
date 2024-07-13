@@ -1,0 +1,9 @@
+urllib3<2
+sphinx
+sphinx-rtd-theme
+ipython
+ipykernel
+jupyter-sphinx
+jwst
+crds
+.
