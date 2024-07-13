@@ -11,10 +11,10 @@ from pathlib import Path
 
 crds_dir = Path(__file__).parent.joinpath('CRDS')/'crds_cache'
 
-if os.access(crds_dir,os.W_OK):
+if os.access(Path(__file__).parent,os.W_OK):
     os.makedirs(crds_dir, exist_ok=True)
 else:
-    raise Exception(f"{crds_dir} is not WRITABLE")
+    raise Exception(f"{Path(__file__).parent} is not WRITABLE")
     
 os.environ['CRDS_PATH'] = str(crds_dir)
 os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
