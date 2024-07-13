@@ -8,19 +8,3 @@ pydol.photometry.nircam module
    :members:
    :undoc-members:
    :show-inheritance:
-
-pydol.photometry.wfc3 module
-----------------------------
-
-.. automodule:: pydol.photometry.wfc3
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: pydol.photometry
-   :members:
-   :undoc-members:
-   :show-inheritance:

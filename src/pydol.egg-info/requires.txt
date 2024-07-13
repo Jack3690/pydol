@@ -1,6 +1,0 @@
-matplotlib
-astropy
-photutils
-numpy
-jwst
-crds

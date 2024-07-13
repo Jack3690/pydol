@@ -8,11 +8,3 @@ pydol.pipeline.jwst module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: pydol.pipeline
-   :members:
-   :undoc-members:
-   :show-inheritance:
