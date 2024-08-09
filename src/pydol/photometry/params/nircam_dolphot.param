@@ -8,10 +8,10 @@ img_xform = 1 0 0       #scale, distortion, and rotation
 img_PSFa = 3 0 0 0 0 0  #PSF XX term (flt)
 img_PSFb = 3 0 0 0 0 0  #PSF YY term (flt)
 img_PSFc = 0 0 0 0 0 0  #PSF XY term (flt)
-img_RAper = 3         #photometry apeture size (flt)
-img_RChi = 2.0           #Aperture for determining centroiding (flt); if <=0 use RAper
-img_RSky =  15 35         #radii defining sky annulus (flt>=RAper+0.5)
-img_RSky2 =  4 10 
+img_RAper = 2           #3 photometry apeture size (flt)
+img_RChi = 1.5          #2.0 Aperture for determining centroiding (flt); if <=0 use RAper
+img_RSky =  15 35       #radii defining sky annulus (flt>=RAper+0.5)
+img_RSky2 =  3 10       #4 10
 img_RPSF = 15           #PSF size (int>0)
 img_aprad = 20          #radius for aperture correction
 img_apsky = 20 35       #sky annulus for aperture correction
