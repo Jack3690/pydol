@@ -8,17 +8,12 @@ from crds import client
 import jwst
 import multiprocessing as mp
 from pathlib import Path
-
-if os.access(Path(__file__).parent,os.W_OK):
-    os.makedirs(crds_dir, exist_ok=True)
-else:
-    raise Exception(f"{Path(__file__).parent} is not WRITABLE")
     
 client.set_crds_server("https://jwst-crds.stsci.edu")
 
 class jpipe():
     def __init__(self, input_files=[], out_dir='.',
-                 crds_context="jwst_1241.pmap", crds_dir=None):
+                 crds_context="jwst_1241.pmap", crds_dir='.'):
         """
             Parameters
             ----------
@@ -38,8 +33,10 @@ class jpipe():
                   None
 
         """
-        if crds_dir is None:
-            crds_dir = Path(__file__).parent.joinpath('CRDS')/'crds_cache'
+        if os.access(crds_dir,os.W_OK):
+            os.makedirs(crds_dir, exist_ok=True)
+        else:
+            raise Exception(f"{crds_dir} is not WRITABLE")
             
         os.environ['CRDS_PATH'] = str(crds_dir)
         os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
@@ -48,9 +45,9 @@ class jpipe():
         self.input_files = input_files
         self.out_dir = out_dir
         if os.access(out_dir,os.W_OK):
-            os.makedirs(out_dir + '/data/stage1/', exist_ok=True)
-            os.makedirs(out_dir + '/data/stage2/', exist_ok=True)
-            os.makedirs(out_dir + '/data/stage3/', exist_ok=True)
+            os.makedirs(out_dir + '/stage1/', exist_ok=True)
+            os.makedirs(out_dir + '/stage2/', exist_ok=True)
+            os.makedirs(out_dir + '/stage3/', exist_ok=True)
         else:
             raise Exception(f"{out_dir} is not WRITABLE")
 
@@ -71,7 +68,7 @@ class jpipe():
         # Snowball Removal (M82 Group)
         img1.jump.expand_large_events = True
         # Specify where the output should go
-        img1.output_dir = self.out_dir + '/data/stage1/'
+        img1.output_dir = self.out_dir + '/stage1/'
         # Save the final resulting _rate.fits files
         img1.save_results = True
         #No of cores
@@ -92,7 +89,7 @@ class jpipe():
         # Instantiate the pipeline
         img2 = Image2Pipeline()
         # Specify where the output should go
-        img2.output_dir = self.out_dir + '/data/stage2/'
+        img2.output_dir = self.out_dir + '/stage2/'
         # Save the final resulting _rate.fits files
         img2.save_results = True
         # Run the pipeline on an input list of files
@@ -120,7 +117,7 @@ class jpipe():
         # Instantiate the pipeline
         img3 = Image3Pipeline()
         # Specify where the output should go
-        img3.output_dir = self.out_dir + '/data/stage3/'
+        img3.output_dir = self.out_dir + '/stage3/'
         # Save the final resulting _rate.fits files
         img3.save_results = True
         # Run the pipeline on an input list of files
