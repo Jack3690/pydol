@@ -24,12 +24,29 @@ if __name__ == "__main__":
 	#	for j in col_t:
 	#		col +=  [j + '_' + str(i+1)]
 	
-	with open(options.filename) as f:
-		dat = f.readlines()
-	data = np.array([i.split()[:len(col)] for i in dat]).astype(float)
-		
-	df = pd.DataFrame(data,columns=col)
+	with open(options.filename + '.columns') as f
+	  cols = f.readlines()
+	  for n, i in enumerate(cols):
+	    if 'Measured' in i:
+	      print(n)
+	      n_filt = (n - 11)//13
+	      break
 	
+	filts = [cols[11+ i*13].split('NIRCAM_')[-1][:-1] for i in range(n_filt)]
+	
+	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type',]
+	col_filt = ['counts_tot','sky_tot','count_rate','count_rate_err','mag_vega','mag_ubvri','mag_err','chi','SNR','sharpness','roundness','crowd','flags']
+	
+	out_cols = col_source
+	for i in filts:
+	    for j in col_filt:
+		out_cols.append(j + '_' + i)
+	
+	with open(options.filename) as f:
+	    dat = f.readlines()
+	data = np.array([i.split()[:len(out_cols)] for i in dat]).astype(float)
+	df = pd.DataFrame(data,columns=out_cols)
+
 	filename = os.path.split(options.filename)[0]
 	if options.format == 'csv':
 		df.to_csv(f'{filename}/{out}.csv')
