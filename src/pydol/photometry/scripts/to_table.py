@@ -24,7 +24,7 @@ if __name__ == "__main__":
 	#	for j in col_t:
 	#		col +=  [j + '_' + str(i+1)]
 	
-	with open(options.filename + '.columns') as f
+	with open(options.filename + '.columns') as f:
 	  cols = f.readlines()
 	  for n, i in enumerate(cols):
 	    if 'Measured' in i:
