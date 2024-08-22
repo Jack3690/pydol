@@ -46,7 +46,8 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.',
       param_file = param_dir_default + '/nircam_dolphot.param'
     else:
       edit_params = False
-      
+
+    out_id = filter + cat_name
     if edit_params:
       # Generating directories
       exps = []
@@ -80,7 +81,6 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.',
       for i,f in enumerate(exps):
           dat[5] += f'img{i+1}_file = {f}/data           #image {i+1}\n'
 
-      out_id = filter + cat_name
       with open(f"{output_dir}/nircam_dolphot_{out_id}.param", 'w', encoding='utf-8') as f:
           f.writelines(dat)
       param_file = f"{output_dir}/nircam_dolphot_{out_id}.param"
