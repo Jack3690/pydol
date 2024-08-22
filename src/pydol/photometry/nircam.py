@@ -8,7 +8,7 @@ import multiprocessing as mp
 from pathlib import Path
 import subprocess
 
-param_dir = str(Path(__file__).parent.joinpath('params'))
+param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
 def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.',
