@@ -99,7 +99,6 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.',
                        shell=True)
 
         phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
-        phot_table.rename_columns(['mag_vega'],[f'mag_vega_{filter.upper()}'])
 
         # Assingning RA-Dec using reference image
         hdu = fits.open(f"{drz_path}.fits")[1]
@@ -113,19 +112,16 @@ def nircam_phot(cal_files, filter='f200w',output_dir='.', drz_path='.',
         phot_table['dec'] = coords[:,1]
 
         # Filtering stellar photometry catalog using Warfield et.al (2023)
-        phot_table1 = phot_table[ (phot_table['sharpness']**2   <= 0.01) &
+        phot_table1 = phot_table[ (phot_table['obj_sharpness']**2   <= 0.01) &
                                     (phot_table['obj_crowd']    <=  0.5) &
-                                    (phot_table['flags']        <=    2) &
                                     (phot_table['type']         <=    2) &
-                                    (phot_table['SNR']          >=    5)]
-
-        phot_table2 = phot_table[ ~((phot_table['sharpness']**2 <= 0.01) &
-                                    (phot_table['obj_crowd']    <=  0.5) &
-                                    (phot_table['flags']        <=    2) &
-                                    (phot_table['type']         <=    2)&
-                                    (phot_table['SNR']          >=    5))]
-
+                                    (phot_table['obj_SNR']      >=    5)]
+        flag_keys = []
+        for key in phot_table1.keys():
+          if 'flag' in key:
+            flag_keys.append(key)
+        for i in flag_keys:
+          phot_table1  = phot_table1[phot_table1[i]<=2]
         phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
         phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
-        phot_table2.write(f'{output_dir}/{out_id}_photometry_rej.fits', overwrite=True)
     print('NIRCAM Stellar Photometry Completed!')
