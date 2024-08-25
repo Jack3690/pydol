@@ -6,7 +6,8 @@ import astropy.units as u
 from scipy.stats import gaussian_kde
 from astropy.modeling import models, fitting
 import seaborn as sb
-from catalog_filter import box
+from .catalog_filter import box
+from matplotlib.colors import LinearSegmentedColormap
 
 sb.set_style('white')
 
@@ -150,7 +151,7 @@ def gen_CMD(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1', dec_
     mag_err2 = tab[mag_err_cols[1]]
 
     if len(mag_err_cols)>2:
-        mag_err3 = tab_bub[mag_err_cols[2]]
+        mag_err3 = tab[mag_err_cols[2]]
     else:
         mag_err3 = mag_err2
 
