@@ -18,7 +18,6 @@ if __name__ == "__main__":
 		cols = f.readlines()
 		for n, i in enumerate(cols):
 			if 'Measured' in i:
-				print(n)
 				n_filt = (n - 11)//13
 				break
 	
