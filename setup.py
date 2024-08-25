@@ -10,8 +10,6 @@ setup(
         license='BSD 2-clause',
         package_dir={'': 'src'},
         packages=find_packages(where='src'),
-        install_requires=['matplotlib', 'astropy', 'photutils',
-                          'numpy', 'jwst','crds'],
         include_package_data=True,
         package_data={'': ['pydol/photometry/*','pydol/pipline/*']},
         classifiers=[
