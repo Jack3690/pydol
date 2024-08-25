@@ -1,0 +1,34 @@
+Metadata-Version: 2.1
+Name: pydol
+Version: 0.0.1
+Summary: Python wrapper for DOLPHOT: Photometry tool
+Home-page: https://github.com/Jack3690/pydol
+Author: Avinash CK
+Author-email: avinash@inaoep.mx
+License: BSD 2-clause
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.9
+Description-Content-Type: text/markdown
+
+# **PyDOL**  [![Documentation Status](https://readthedocs.org/projects/pydol/badge/?version=latest)](https://insist.readthedocs.io/en/latest/?badge=latest)
+
+PyDOL is a Python interface for resolved stellar photometric studies using HST and JWST. PyDOL contains HST and JWST pipelines for re-processing data using the latest calibration files from CRDS. A Python wrapper for DOLPHOT is included for crowd-field PSF Photometry and completeness analysis for HST-ACS, HST-WFC3, and JWST-NIRCAM data. Additionally, PyDOL includes modules for Bayesian Star Formation History analysis that use PARSEC isochrones.
+
+### Installation
+```
+pip install git+https://github.com/Jack3690/pydol/
+```
+## Pre-requisites
+1. DOLPHOT
+   
+## Notebooks
+
+* Example                      : [Example.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/Example.ipynb)
+* pydol                        : [pydol.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/pydol.ipynb)
+
+

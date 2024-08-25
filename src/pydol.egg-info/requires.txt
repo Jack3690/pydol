@@ -1,0 +1,10 @@
+numpy
+matplotlib
+photutils==1.11.0
+astropy
+jwst
+crds
+astroquery
+wfc3tools
+stwcs
+drizzlepac

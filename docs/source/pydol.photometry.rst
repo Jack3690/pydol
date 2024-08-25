@@ -8,3 +8,23 @@ pydol.photometry.nircam module
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: pydol.photometry.scripts.cmdtools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pydol.photometry.scripts.catalog_filter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pydol.photometry.scripts.composite
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: pydol.photometry.scripts.gloess
+   :members:
+   :undoc-members:
+   :show-inheritance:
