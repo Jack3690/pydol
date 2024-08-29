@@ -9,6 +9,11 @@ pydol.photometry.nircam module
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: pydol.photometry.acs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: pydol.photometry.scripts.cmdtools
    :members:
    :undoc-members:

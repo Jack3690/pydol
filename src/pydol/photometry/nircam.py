@@ -8,7 +8,7 @@ import multiprocessing as mp
 from pathlib import Path
 import subprocess
 import pandas as pd
-from ..scripts.catalog_filer import box
+from .scripts.catalog_filter import box
 
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))

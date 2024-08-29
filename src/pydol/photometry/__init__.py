@@ -1,2 +1,3 @@
-from .nircam import nircam_phot
+from . import nircam
+from . import acs
 from .scripts import *
