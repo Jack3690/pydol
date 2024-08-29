@@ -7,7 +7,6 @@ import os
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='DOLPHOT Output to Table')
 	parser.add_argument("--f", dest='filename', default='out', type = str, help='Photometry')
-	parser.add_argument("--n", dest='n', default='0', type = int, help='Photometry')
 	parser.add_argument("--t", dest='format', default='fits', type = str, help="'csv' or 'fits'")
 	parser.add_argument("--o", dest='out', default='photometry', type = str, help="Output filename")
 	options = parser.parse_args()
