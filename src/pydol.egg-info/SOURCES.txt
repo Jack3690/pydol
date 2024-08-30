@@ -12,6 +12,7 @@ src/pydol/photometry/__init__.py
 src/pydol/photometry/acs.py
 src/pydol/photometry/nircam.py
 src/pydol/photometry/__pycache__/__init__.cpython-310.pyc
+src/pydol/photometry/__pycache__/acs.cpython-310.pyc
 src/pydol/photometry/__pycache__/nircam.cpython-310.pyc
 src/pydol/photometry/__pycache__/wfc3.cpython-310.pyc
 src/pydol/photometry/params/acs_dolphot_f814w.param
