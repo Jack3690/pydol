@@ -2,6 +2,7 @@ Nimg = 1                #number of images (int)
 #
 # The following parameters can be specified for individual images (img1_...)
 #  or applied to all images (img_...)
+img0_file = ../PHOT_OUTPUT_r25/bkg3/F336W/data_conv            #image 1
 img1_file = ../PHOT_OUTPUT_r25/bkg3/F336W/data_conv            #image 1
 img_shift = 0 0         #shift relative to reference
 img_xform = 1 0 0       #scale, distortion, and rotation
