@@ -13,14 +13,14 @@ from .scripts.catalog_filter import box
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
-def acs_phot(clt_files, filter='f435w',output_dir='.', drz_path='.',
+def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
                 cat_name='', param_file=None,sharp_cut=0.01,
                 crowd_cut=0.5):
     """
         Parameters
         ---------
         flt_files: list,
-                    list of paths to HST acs level 3 _clt.fits files
+                    list of paths to HST acs level 3 _flt.fits files
         filter: str,
                 name of the ACS filter being processed
         output_dir: str,
@@ -36,7 +36,7 @@ def acs_phot(clt_files, filter='f435w',output_dir='.', drz_path='.',
         ------
         None
     """
-    if len(clt_files)<1:
+    if len(flt_files)<1:
         raise Exception("crf_files cannot be EMPTY")
 
 
@@ -55,7 +55,7 @@ def acs_phot(clt_files, filter='f435w',output_dir='.', drz_path='.',
 
     # Generating directories
     exps = []
-    for i,f in enumerate(clt_files):
+    for i,f in enumerate(flt_files):
         out_dir = f.split('/')[-1].split('.')[0]
 
         if not os.path.exists(f'{output_dir}/{out_dir}'):
