@@ -63,12 +63,10 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
         if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
             subprocess.run([f"cp {f} {output_dir}/{out_dir}/data.fits"],
                                 shell=True)
-
         exps.append(f'{output_dir}/{out_dir}')
 
     # Applying NIRCAM Mask
     print("Running ACSMMASK, CALCSKY AND SPLITGROUPS...")
-    exps_n = []
     for f in exps:
         if not os.path.exists(f"{f}/data.chip1.sky.fits") or not os.path.exists(f"{f}/data.chip2.sky.fits") :
 
@@ -82,12 +80,6 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
             
             out = subprocess.run([f"calcsky {f}/data.chip2 15 35 4 2.25 2.00"]
                                 , shell=True, capture_output=True)
-            exps_n.append(f"{f}/data.chip1")
-            exps_n.append(f"{f}/data.chip2")
-        else:
-          exps_n.append(f"{f}/data.chip1")
-          exps_n.append(f"{f}/data.chip2")
-    exps = exps_n
     if edit_params:
       # Preparing Parameter file DOLPHOT NIRCAM
       with open(param_file) as f:
@@ -98,7 +90,8 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
       dat[5] = ''
 
       for i,f in enumerate(exps):
-          dat[5] += f'img{i+1}_file = {f}/data           #image {i+1}\n'
+          dat[5] += f'img{2*i+1}_file = {f}/data.chip1          #image {2*i+1}\n'
+          dat[5] += f'img{2*i+2}_file = {f}/data.chip2          #image {2*i+2}\n'
 
       with open(f"{output_dir}/acs_dolphot_{out_id}.param", 'w', encoding='utf-8') as f:
           f.writelines(dat)
