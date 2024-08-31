@@ -70,7 +70,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
     print("Running ACSMMASK, CALCSKY AND SPLITGROUPS...")
     exps_n = []
     for f in exps:
-        if not os.path.exists(f"{f}/data.sky.fits"):
+        if not os.path.exists(f"{f}/data.chip1.sky.fits") or not os.path.exists(f"{f}/data.chip4.sky.fits") :
 
             out = subprocess.run([f"acsmask {f}/data.fits"]
                                     ,shell=True)
