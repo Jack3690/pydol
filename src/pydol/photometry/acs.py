@@ -70,7 +70,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
     print("Running ACSMMASK, CALCSKY AND SPLITGROUPS...")
     exps_n = []
     for f in exps:
-        if not os.path.exists(f"{f}/data.chip1.sky.fits") or not os.path.exists(f"{f}/data.chip4.sky.fits") :
+        if not os.path.exists(f"{f}/data.chip1.sky.fits") or not os.path.exists(f"{f}/data.chip2.sky.fits") :
 
             out = subprocess.run([f"acsmask {f}/data.fits"]
                                     ,shell=True)
@@ -80,10 +80,10 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
             out = subprocess.run([f"calcsky {f}/data.chip1 15 35 4 2.25 2.00"]
                                 , shell=True, capture_output=True)
             
-            out = subprocess.run([f"calcsky {f}/data.chip4 15 35 4 2.25 2.00"]
+            out = subprocess.run([f"calcsky {f}/data.chip2 15 35 4 2.25 2.00"]
                                 , shell=True, capture_output=True)
             exps_n.append(f"{f}/data.chip1")
-            exps_n.append(f"{f}/data.chip4")
+            exps_n.append(f"{f}/data.chip2")
     exps = exps_n
     if edit_params:
       # Preparing Parameter file DOLPHOT NIRCAM
