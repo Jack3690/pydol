@@ -85,7 +85,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
       with open(param_file) as f:
                   dat = f.readlines()
 
-      dat[0] = f'Nimg = {len(exps)}                #number of images (int)\n'
+      dat[0] = f'Nimg = {int(2*len(exps))}                #number of images (int)\n'
       dat[4] = f'img0_file = {drz_path}\n'
       dat[5] = ''
 
