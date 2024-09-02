@@ -111,7 +111,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
         phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
 
         # Assingning RA-Dec using reference image
-        hdu = fits.open(f"{drz_path}.fits")[1]
+        hdu = fits.open(f"{drz_path}.fits")[0]
 
         wcs = WCS(hdu.header)
         positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
