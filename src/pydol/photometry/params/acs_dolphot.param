@@ -45,7 +45,7 @@ MaxE = 0.5              #maximum ellipticity for good star (flt)
 #
 # Settings to enable/disable features
 UseWCS = 2              #use WCS info in alignment (int 0=no, 1=shift/rotate/scale, 2=full)
-Align = 1               #align images? (int 0=no,1=const,2=lin,3=cube)
+Align = 2               #align images? (int 0=no,1=const,2=lin,3=cube)
 AlignIter = 1           #number of iterations on alignment? (int>0)
 AlignTol = 0            #number of pixels to search in preliminary alignment (flt>=0)
 AlignStep = 1           #stepsize for preliminary alignment search (flt>0)
