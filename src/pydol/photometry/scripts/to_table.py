@@ -10,7 +10,6 @@ if __name__ == "__main__":
 	parser.add_argument("--t", dest='format', default='fits', type = str, help="'csv' or 'fits'")
 	parser.add_argument("--o", dest='out', default='photometry', type = str, help="Output filename")
 	options = parser.parse_args()
-	n = options.n
 	out = options.out
 	
 	with open(options.filename + '.columns') as f:
