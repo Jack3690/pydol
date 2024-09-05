@@ -7,6 +7,7 @@ import os
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='DOLPHOT Output to Table')
 	parser.add_argument("--f", dest='filename', default='out', type = str, help='Photometry')
+	parser.add_argument("--d", dest='detector', default='NIRCAM', type = str, help='detector')
 	parser.add_argument("--t", dest='format', default='fits', type = str, help="'csv' or 'fits'")
 	parser.add_argument("--o", dest='out', default='photometry', type = str, help="Output filename")
 	options = parser.parse_args()
@@ -19,7 +20,7 @@ if __name__ == "__main__":
 				n_filt = (n - 11)//13
 				break
 	
-	filts = [cols[11+ i*13].split('NIRCAM_')[-1][:-1] for i in range(n_filt)]
+	filts = [cols[11+ i*13].split(f'{options.detector.upper()}_')[-1][:-1] for i in range(n_filt)]
 	
 	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type',]
 	col_filt = ['counts_tot','sky_tot','count_rate','count_rate_err','mag_vega','mag_ubvri','mag_err','chi','SNR','sharpness','roundness','crowd','flags']
