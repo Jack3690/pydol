@@ -105,7 +105,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
           print(line)
     # Generating Astropy FITS Table
 
-        out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out"],
+        out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out --d ACS"],
                        shell=True)
 
         phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
