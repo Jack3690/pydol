@@ -101,39 +101,39 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
         out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out --d NIRCAM"],
                        shell=True)
 
-        phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
+    phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
 
-        # Assingning RA-Dec using reference image
-        hdu = fits.open(f"{drz_path}.fits")[1]
+    # Assingning RA-Dec using reference image
+    hdu = fits.open(f"{drz_path}.fits")[1]
 
-        wcs = WCS(hdu.header)
-        positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
+    wcs = WCS(hdu.header)
+    positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
 
-        coords = np.array(wcs.pixel_to_world_values(positions))
+    coords = np.array(wcs.pixel_to_world_values(positions))
 
-        phot_table['ra']  = coords[:,0]
-        phot_table['dec'] = coords[:,1]
+    phot_table['ra']  = coords[:,0]
+    phot_table['dec'] = coords[:,1]
 
-        # Filtering stellar photometry catalog using Warfield et.al (2023)
-        phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                    (phot_table['obj_crowd']<= crowd_cut) &
-                                    (phot_table['type'] <= 2)]
-        flag_keys = []
-        for key in phot_table1.keys():
-            if 'flag' in key:
-                flag_keys.append(key)
-        for i in flag_keys:
-            phot_table1  = phot_table1[phot_table1[i]<=2]
+    # Filtering stellar photometry catalog using Warfield et.al (2023) (Default)
+    phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
+                                (phot_table['obj_crowd']<= crowd_cut) &
+                                (phot_table['type'] <= 2)]
+    flag_keys = []
+    for key in phot_table1.keys():
+        if 'flag' in key:
+            flag_keys.append(key)
+    for i in flag_keys:
+        phot_table1  = phot_table1[phot_table1[i]<=2]
 
-        SNR_keys = []
-        for key in phot_table1.keys():
-            if 'SNR' in key:
-                SNR_keys.append(key)
-        for i in SNR_keys:
-            phot_table1  = phot_table1[phot_table1[i]>=5]
+    SNR_keys = []
+    for key in phot_table1.keys():
+        if 'SNR' in key:
+            SNR_keys.append(key)
+    for i in SNR_keys:
+        phot_table1  = phot_table1[phot_table1[i]>=5]
 
-        phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
-        phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
+    phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
+    phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
     print('NIRCAM Stellar Photometry Completed!')
 
 def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', drz_path='.',

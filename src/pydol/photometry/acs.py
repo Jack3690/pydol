@@ -97,7 +97,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
           f.writelines(dat)
       param_file = f"{output_dir}/acs_dolphot_{out_id}.param"
     if not os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
-        # Running DOLPHOT NIRCAM
+        # Running DOLPHOT ACS
         p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file}"]
                             , stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
@@ -121,7 +121,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
     phot_table['ra']  = coords[:,0]
     phot_table['dec'] = coords[:,1]
 
-    # Filtering stellar photometry catalog using Warfield et.al (2023)
+    # Filtering stellar photometry catalog using William et.al (2021) (Default)
     phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
                                 (phot_table['obj_crowd']<= crowd_cut) &
                                 (phot_table['type'] <= 2)]
