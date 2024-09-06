@@ -14,8 +14,8 @@ param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
 def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
-                cat_name='', param_file=None,sharp_cut=0.01,
-                crowd_cut=0.5):
+                cat_name='', param_file=None,sharp_cut=0.2,
+                crowd_cut=2.25):
     """
         Parameters
         ---------
@@ -141,4 +141,4 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
 
         phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
         phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
-    print('NIRCAM Stellar Photometry Completed!')
+    print('ACS Stellar Photometry Completed!')
