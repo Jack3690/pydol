@@ -233,8 +233,8 @@ def gen_CMD(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1', dec_
     ax.yaxis.set_minor_locator(AutoMinorLocator())
 
 
-    ax.tick_params(which='both', length=15,direction="in", bottom=True, top=True,left=True)
-    ax.tick_params(which='minor', length=8)
+    ax.tick_params(which='both', length=15,direction="in", bottom=True, top=True,left=True, width = 3)
+    ax.tick_params(which='minor', length=8, width = 3)
 
     if ab_dist:
         ax1.yaxis.set_minor_locator(AutoMinorLocator())
