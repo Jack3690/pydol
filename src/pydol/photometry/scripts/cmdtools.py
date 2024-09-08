@@ -55,15 +55,18 @@ def running_avg(x,y, nbins=100, mode='median'):
 def gen_CMD(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1', dec_col= 'dec_1',
             ra_cen=0, dec_cen=0, r_in=0, r_out=24, Av=0.19,  Av_ = 3, Av_x=2, Av_y=19,
              sqr_field=False, ab_dist = True,  dismod=29.7415, xlims=[-0.5,2.5], ylims=[18,28], met=0.02, gen_contours=False,cmd=None,  gen_kde=False, fig = None, ax= None, label_min=None, label_max=None, ages=[7.,8.,9.], alpha=1, s =0.2,lw=3, ref_xpos=-0.25, skip_data = False,
-            ang=245.00492, mag_err_cols = ['mag_err_1','mag_err_2'], show_err_model=False):
+            ang=245.00492, mag_err_cols = None, show_err_model=False):
     
+    if filt3 is None:
+        filt3 = filt2
+        
+    if mag_err_cols is None:
+        mag_err_cols = [f'mag_err_{filt1.upper()}', f'mag_err_{filt2.upper()}',f'mag_err_{filt3.upper()}']
+        
     # Filtering Isochrone evolutionary phases
     if label_min is None or label_max is None:
         label_min = 0
         label_max = 10
-        
-    if filt3 is None:
-        filt3 = filt2
         
     if met is not None and cmd is not None:
         cmd = cmd[cmd['Zini']==met]
@@ -265,14 +268,18 @@ def gen_CMD(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1', dec_
                      
 def gen_CMD_xcut(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1', dec_col= 'dec_1',
                  ra_cen=0, dec_cen=0, r_in=0, r_out=24, sqr_field=False, Av=0.19,
-                 mag_err_cols = ['mag_err_1','mag_err_2'],  dismod=29.95, mag_err_lim=0.2,label_min=0, 
+                 mag_err_cols = None,  dismod=29.95, mag_err_lim=0.2,label_min=0, 
                  label_max=10, cmd=None,  Av_=3,  Av_x=2, Av_y=22,  xlims=[-0.5,2.5], ylims=[18,30], 
                  ang=245.00492 , age=9.0,met=0.02,  fit_slope=False, cmd_ylo=None, cmd_yhi=None, cmd_xlo = None, 
                  cmd_xhi= None, y_lo = 22, y_hi=26.5, dy=0.5, dx=0.5, rgb_xlo=0.5,rgb_xhi=2,
                  rgb_ylo=23, rgb_yhi=26, fit_isochrone=True, fig=None, ax=None,s=5,lw=3):
-        
+    
     if filt3 is None:
         filt3 = filt2
+        
+    if mag_err_cols is None:
+        mag_err_cols = [f'mag_err_{filt1.upper()}', f'mag_err_{filt2.upper()}',f'mag_err_{filt3.upper()}']
+    
         
     if met is not None:
         cmd = cmd[cmd['Zini']==met]
@@ -449,7 +456,7 @@ def gen_CMD_xcut(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1',
 
 def gen_CMD_ycut(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1', dec_col= 'dec_1',
                  ra_cen=0, dec_cen=0, Av=0.19, r=333, r_in=None, r_out=None,  met=0.02, mag_err_lim=0.2,
-                 mag_err_cols = ['mag_err_1','mag_err_2'], label_min=0, label_max=3,
+                 mag_err_cols = None, label_min=0, label_max=3,
                 dismod=29.95, cmd=None, xlims=[-0.5,2.5], ylims=[18,30], sqr_field=False,
                 age=9.0, cmd_xlo = None, cmd_xhi= None, gen_kde=False, perp_iso=False,
                 y_lo = 22, y_hi=26.5, dy=0.5, Av_ = 3,ref_xpos=0.25, rgb_xlo=0.5,rgb_xhi=2,
@@ -458,6 +465,10 @@ def gen_CMD_ycut(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1',
     
     if filt3 is None:
         filt3 = filt2
+        
+    if mag_err_cols is None:
+        mag_err_cols = [f'mag_err_{filt1.upper()}', f'mag_err_{filt2.upper()}',f'mag_err_{filt3.upper()}']
+        
     if met is not None and cmd is not None:
         if 'Zini' in cmd.keys():
             cmd = cmd[cmd['Zini']==met]
