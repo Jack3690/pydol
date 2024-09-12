@@ -121,7 +121,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
         phot_table['ra']  = coords[:,0]
         phot_table['dec'] = coords[:,1]
 
-        # Filtering stellar photometry catalog using Warfield et.al (2023)
+        # Filtering stellar photometry catalog using Williams et al (2021)
         phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
                                     (phot_table['obj_crowd']<= crowd_cut) &
                                     (phot_table['type'] <= 2)]
