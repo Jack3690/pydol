@@ -8,3 +8,5 @@ astroquery
 wfc3tools
 stwcs
 drizzlepac
+pystan
+scipy
