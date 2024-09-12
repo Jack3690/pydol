@@ -97,7 +97,7 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
           f.writelines(dat)
       param_file = f"{output_dir}/acs_dolphot_{out_id}.param"
     if not os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
-        # Running DOLPHOT NIRCAM
+        # Running DOLPHOT ACS
         p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file}"]
                             , stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
@@ -105,40 +105,40 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
           print(line)
     # Generating Astropy FITS Table
 
-        out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out"],
+        out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out --d ACS"],
                        shell=True)
+      
+    phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
 
-        phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
+    # Assingning RA-Dec using reference image
+    hdu = fits.open(f"{drz_path}.fits")[0]
 
-        # Assingning RA-Dec using reference image
-        hdu = fits.open(f"{drz_path}.fits")[0]
+    wcs = WCS(hdu.header)
+    positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
 
-        wcs = WCS(hdu.header)
-        positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
+    coords = np.array(wcs.pixel_to_world_values(positions))
 
-        coords = np.array(wcs.pixel_to_world_values(positions))
+    phot_table['ra']  = coords[:,0]
+    phot_table['dec'] = coords[:,1]
 
-        phot_table['ra']  = coords[:,0]
-        phot_table['dec'] = coords[:,1]
+    # Filtering stellar photometry catalog using William et.al (2021) (Default)
+    phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
+                                (phot_table['obj_crowd']<= crowd_cut) &
+                                (phot_table['type'] <= 2)]
+    flag_keys = []
+    for key in phot_table1.keys():
+        if 'flag' in key:
+            flag_keys.append(key)
+    for i in flag_keys:
+        phot_table1  = phot_table1[phot_table1[i]<=2]
 
-        # Filtering stellar photometry catalog using Williams et al (2021)
-        phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                    (phot_table['obj_crowd']<= crowd_cut) &
-                                    (phot_table['type'] <= 2)]
-        flag_keys = []
-        for key in phot_table1.keys():
-            if 'flag' in key:
-                flag_keys.append(key)
-        for i in flag_keys:
-            phot_table1  = phot_table1[phot_table1[i]<=2]
+    SNR_keys = []
+    for key in phot_table1.keys():
+        if 'SNR' in key:
+            SNR_keys.append(key)
+    for i in SNR_keys:
+        phot_table1  = phot_table1[phot_table1[i]>=5]
 
-        SNR_keys = []
-        for key in phot_table1.keys():
-            if 'SNR' in key:
-                SNR_keys.append(key)
-        for i in SNR_keys:
-            phot_table1  = phot_table1[phot_table1[i]>=5]
-
-        phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
-        phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
+    phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
+    phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
     print('ACS Stellar Photometry Completed!')
