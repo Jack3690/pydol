@@ -8,6 +8,7 @@ from astropy.modeling import models, fitting
 import seaborn as sb
 from .catalog_filter import box
 from matplotlib.colors import LinearSegmentedColormap
+import pandas as pd
 
 sb.set_style('white')
 
