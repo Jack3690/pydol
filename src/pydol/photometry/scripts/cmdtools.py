@@ -83,10 +83,10 @@ def gen_CMD(tab, name = '', filt1 = 'f115w', filt2 = 'f150w', filt3 = None, ra_c
              magnitude of an extinction vector. 
         Av_x, Av_y: float,
                     x and y component from where the extinction vector would be ploted.
-        sqr_field: boolean,
+        sqr_field: bool,
                    if True, the area centered in ra_cen, dec_cen is a square; 
                    else, the area is a circle.
-        ab_dist: boolean,
+        ab_dist: bool,
                  if True, absolute magnitude is computed and an axis is ploted (it requires dismod);
                  else, just aparent magnitud is computed and ploted.
         dismod: float,
@@ -99,7 +99,7 @@ def gen_CMD(tab, name = '', filt1 = 'f115w', filt2 = 'f150w', filt3 = None, ra_c
         
         gen_contours: boolen,
                       if True, it generates contours for de CMD
-        gen_kde: boolean,
+        gen_kde: bool,
                  if True, it estimates a distribution function based on a kernel
         fig: 
 
