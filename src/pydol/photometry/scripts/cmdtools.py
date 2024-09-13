@@ -147,7 +147,7 @@ def gen_CMD(tab, name = '', filt1 = 'f115w', filt2 = 'f150w', filt3 = None, ra_c
     if not sqr_field:
         tab = tab[(tab['r'] >= r_in) & (tab['r'] <= r_out)]
     else:
-        tab = catalog_filter.box(tab, ra_col, dec_col, ra_cen, dec_cen,
+        tab = box(tab, ra_col, dec_col, ra_cen, dec_cen,
                       r_out/3600, r_out/3600, ang)
 
     ### Data for each star ###
