@@ -1,30 +1,28 @@
-pydol.photometry package
+Photometry
 ========================
 
-pydol.photometry.nircam module
+NIRCAM module
 ------------------------------
-
 .. automodule:: pydol.photometry.nircam
    :members:
    :undoc-members:
    :show-inheritance:
 
+ACS module
+------------------------------
 .. automodule:: pydol.photometry.acs
    :members:
    :undoc-members:
    :show-inheritance:
 
+CMD Tools module
+------------------------------
 .. automodule:: pydol.photometry.scripts.cmdtools
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: pydol.photometry.scripts.catalog_filter
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: pydol.photometry.scripts.composite
    :members:
    :undoc-members:
    :show-inheritance:

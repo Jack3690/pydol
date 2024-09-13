@@ -1,10 +1,11 @@
-pydol.pipeline package
+Pipeline
 ======================
 
-pydol.pipeline.jwst module
+JWST pipeline
 --------------------------
 
 .. automodule:: pydol.pipeline.jwst
    :members:
    :undoc-members:
    :show-inheritance:
+
