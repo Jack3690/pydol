@@ -1,0 +1,29 @@
+Metadata-Version: 2.1
+Name: pydol
+Version: 0.0.1
+Summary: Python wrapper for DOLPHOT: Photometry tool
+Home-page: https://github.com/Jack3690/pydol
+Author: Avinash CK
+Author-email: avinash@inaoep.mx
+License: BSD 2-clause
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.9
+Description-Content-Type: text/markdown
+
+# **PyDOL**
+
+PyDOL is a Python wrapper around DOLPHOT package (add citation)
+
+## Pre-requisites
+1. PSFex
+2. Source-extractor
+3. DOLPHOT
+4. TOPCAT
+5. STILTS
+
+

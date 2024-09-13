@@ -1,4 +1,5 @@
 MANIFEST.in
+README.md
 setup.cfg
 setup.py
 src/pydol/__init__.py
@@ -8,6 +9,24 @@ src/pydol.egg-info/dependency_links.txt
 src/pydol.egg-info/requires.txt
 src/pydol.egg-info/top_level.txt
 src/pydol/__pycache__/__init__.cpython-310.pyc
+src/pydol/bayestar/__init__.py
+src/pydol/bayestar/core.py
+src/pydol/bayestar/run.py
+src/pydol/bayestar/__pycache__/__init__.cpython-311.pyc
+src/pydol/bayestar/__pycache__/core.cpython-311.pyc
+src/pydol/bayestar/__pycache__/run.cpython-311.pyc
+src/pydol/bayestar/data/test_files/data.test
+src/pydol/bayestar/data/test_files/Isochrone.test/11_PARSEC1.1_Z0.015_logAGE7.0Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/12_PARSEC1.1_Z0.015_logAGE7.1Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/13_PARSEC1.1_Z0.015_logAGE7.2Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/14_PARSEC1.1_Z0.015_logAGE7.3Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/15_PARSEC1.1_Z0.015_logAGE7.4Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/16_PARSEC1.1_Z0.015_logAGE7.5Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/17_PARSEC1.1_Z0.015_logAGE7.6Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/18_PARSEC1.1_Z0.015_logAGE7.7Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/19_PARSEC1.1_Z0.015_logAGE7.8Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/20_PARSEC1.1_Z0.015_logAGE7.9Myr_HST_BVI.isoc
+src/pydol/bayestar/data/test_files/Isochrone.test/21_PARSEC1.1_Z0.015_logAGE8.0Myr_HST_BVI.isoc
 src/pydol/photometry/__init__.py
 src/pydol/photometry/acs.py
 src/pydol/photometry/nircam.py
@@ -41,3 +60,5 @@ src/pydol/pydol.egg-info/SOURCES.txt
 src/pydol/pydol.egg-info/dependency_links.txt
 src/pydol/pydol.egg-info/requires.txt
 src/pydol/pydol.egg-info/top_level.txt
+tests/test.py
+tests/test_pipeline.py
