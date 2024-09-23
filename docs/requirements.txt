@@ -6,4 +6,5 @@ ipykernel
 jupyter-sphinx
 jwst
 crds
+seaborn
 .
