@@ -79,7 +79,7 @@ def gen_CMD(tab, name = '', filt1 = 'f115w', filt2 = 'f150w', filt3 = None, ra_c
                      minimum (r_in) and maximum (r_out) distance from the center coordinates for a star to be part of the CMD.
         Av: float,
             extinction value.
-        Av_: float,
+        Av\_: float,
              magnitude of an extinction vector. 
         Av_x, Av_y: float,
                     x and y component from where the extinction vector would be ploted.
