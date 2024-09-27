@@ -15,6 +15,13 @@ ACS module
    :undoc-members:
    :show-inheritance:
 
+WFC3 module
+------------------------------
+.. automodule:: pydol.photometry.wfc3
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 CMD Tools module
 ------------------------------
 .. automodule:: pydol.photometry.scripts.cmdtools
