@@ -138,9 +138,9 @@ def wfc3_phot(flt_files, det='UVIS', filter='f814w',output_dir='.', drz_path='.'
     phot_table['dec'] = coords[:,1]
 
     # Filtering stellar photometry catalog using William et.al (2021) (Default)
-    phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                (phot_table['obj_crowd']<= crowd_cut) &
-                                (phot_table['type'] <= 2)]
+    phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<=sharp_cut) &
+                                (phot_table['obj_crowd']<=crowd_cut) &
+                                (phot_table['type']<= 2)]
     flag_keys = []
     for key in phot_table1.keys():
         if 'flag' in key:
