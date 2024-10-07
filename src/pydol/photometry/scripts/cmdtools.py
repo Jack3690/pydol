@@ -298,10 +298,6 @@ def gen_CMD(tab, name = '', filt1 = 'f115w', filt2 = 'f150w', filt3 = None, ra_c
     ax.set_xlabel(f"{filt1.upper()} - {filt2.upper()}")
     ax.set_ylabel(filt3.upper())
     
-    ax.set_ylim(ylims[0], ylims[1])
-    ax.set_xlim(xlims[0], xlims[1])
-    ax.invert_yaxis()
-    
     ax.xaxis.set_major_locator(AutoLocator())
     ax.xaxis.set_minor_locator(AutoMinorLocator())
     
@@ -329,6 +325,14 @@ def gen_CMD(tab, name = '', filt1 = 'f115w', filt2 = 'f150w', filt3 = None, ra_c
 
     ax.tick_params(which='both', length=15,direction="in", bottom=True, top=True,left=True)
     ax.tick_params(which='minor', length=8, width = 2)
+
+    ax.set_ylim(ylims[0], ylims[1])
+    ax.set_xlim(xlims[0], xlims[1])
+
+    ax.invert_yaxis()
+    if ab_dist:
+        ax1.invert_yaxis()
+        
     ax.legend(fontsize = 18)    
 
     AF1_ =  Av_dict[filt1]*Av_
