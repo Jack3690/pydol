@@ -6,7 +6,7 @@ import astropy.units as u
 from scipy.stats import gaussian_kde
 from astropy.modeling import models, fitting
 import seaborn as sb
-from .catalog_filter import box
+from .catalog_filter import box, ellipse
 from matplotlib.colors import LinearSegmentedColormap
 import pandas as pd
 
@@ -148,9 +148,9 @@ def gen_CMD(tab, name = '', filt1 = 'f115w', filt2 = 'f150w', filt3 = None,
 
     # Circular, square or elliptical area around ra_center and dec_center
     if sqr_field is True:
-        tab = catalog_filter.box(tab, ra_col, dec_col, ra_cen, dec_cen, r_out/3600, r_out/3600, ang)
+        tab = box(tab, ra_col, dec_col, ra_cen, dec_cen, r_out/3600, r_out/3600, ang)
     elif ellip_field is True:  # Cambié if por elif
-        tab = catalog_filter.ellipse(tab, ra_col, dec_col, ra_cen, dec_cen, angle=ang, a=r_in, b=r_out)
+        tab = ellipse(tab, ra_col, dec_col, ra_cen, dec_cen, angle=ang, a=r_in, b=r_out)
     else:
         tab['r'] = angular_separation(tab[ra_col]*u.deg, tab[dec_col]*u.deg,
                                ra_cen*u.deg, dec_cen*u.deg).to(u.arcsec).value
