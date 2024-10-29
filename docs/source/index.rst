@@ -6,23 +6,16 @@
 Welcome to pydol's documentation!
 #################################
 
-PyDOL is a Python interface for resolved stellar photometric studies using HST and JWST. PyDOL contains HST and JWST pipelines for re-processing data using the latest calibration files from CRDS. A Python wrapper for DOLPHOT is included for crowd-field PSF Photometry and completeness analysis for HST-ACS, HST-WFC3, and JWST-NIRCAM data. Additionally, PyDOL includes modules for Bayesian Star Formation History analysis that use PARSEC isochrones.
-
-===============
-Getting Started
-===============
-
-----------------------------------
-Installing the Development Version
-----------------------------------
-
-.. code-block:: bash
-
-  $ pip install git+https://github.com/Jack3690/pydol
-  
+PyDOL is a Python interface for resolved stellar photometric studies using HST and JWST. PyDOL contains HST and JWST pipelines for re-processing data using the latest calibration files from CRDS. A Python wrapper for DOLPHOT is included for crowd-field PSF Photometry and completeness analysis for HST-ACS, HST-WFC3, and JWST-NIRCAM data.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Getting Started:
+
+   getting_started
+  
+.. toctree::
+   :maxdepth: 3
    :caption: Modules:
 
    pydol

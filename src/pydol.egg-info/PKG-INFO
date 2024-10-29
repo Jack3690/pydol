@@ -1,12 +1,11 @@
 Metadata-Version: 2.1
 Name: pydol
-Version: 0.0.1
+Version: 0.0.2
 Summary: Python wrapper for DOLPHOT: Photometry tool
 Home-page: https://github.com/Jack3690/pydol
 Author: Avinash CK
 Author-email: avinash@inaoep.mx
 License: BSD 2-clause
-Platform: UNKNOWN
 Classifier: Development Status :: 1 - Planning
 Classifier: Intended Audience :: Science/Research
 Classifier: License :: OSI Approved :: BSD License
@@ -14,6 +13,18 @@ Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.9
 Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: photutils==1.11.0
+Requires-Dist: astropy
+Requires-Dist: jwst
+Requires-Dist: crds
+Requires-Dist: astroquery
+Requires-Dist: wfc3tools
+Requires-Dist: stwcs
+Requires-Dist: drizzlepac
+Requires-Dist: pystan
+Requires-Dist: scipy
 
 # **PyDOL**  [![Documentation Status](https://readthedocs.org/projects/pydol/badge/?version=latest)](https://insist.readthedocs.io/en/latest/?badge=latest)
 
@@ -30,5 +41,3 @@ pip install git+https://github.com/Jack3690/pydol/
 
 * Example                      : [Example.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/Example.ipynb)
 * pydol                        : [pydol.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/pydol.ipynb)
-
-

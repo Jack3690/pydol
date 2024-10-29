@@ -34,7 +34,6 @@ class jpipe():
 
         """
         if os.access(crds_dir,os.W_OK):
-            crds_dir += '/CRDS/'
             os.makedirs(crds_dir, exist_ok=True)
         else:
             raise Exception(f"{crds_dir} is not WRITABLE")

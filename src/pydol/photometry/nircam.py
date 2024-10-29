@@ -136,9 +136,9 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
     print('NIRCAM Stellar Photometry Completed!')
 
-def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', drz_path='.',
+def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.',
                 cat_name='', param_file=None,sharp_cut=0.01, crowd_cut=0.5,
-                ra=0,dec=0,width=24/3600,height=24/3600,ang=245):
+                ra=0,dec=0,width=24/3600,height=24/3600,ang=245, nx=10,ny=10):
     """
         Parameters
         ---------
@@ -149,8 +149,8 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', drz_path='.'
         output_dir: str,
                     path to output directory.
                     Recommended: /photometry/
-        drz_path: str,
-                  path to level 3 drizzled image (_i2d.fits) image.
+        tab_path: str,
+                  path to photometry table.
                   It is recommended to be inside /photometry/
         cat_name: str,
                   Output photometry catalogs will have prefix filter + cat_name
@@ -162,7 +162,6 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', drz_path='.'
     if len(crf_files)<1:
         raise Exception("crf_files cannot be EMPTY")
 
-    subprocess.run([f"nircammask {drz_path}.fits"], shell=True)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -172,12 +171,12 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', drz_path='.'
     out_id = filter + cat_name
 
      # Completeness
-    tab = Table.read(drz_path)
+    tab = Table.read(tab_path)
     tab_n = box(tab,ra, dec, width, height, angle=ang)
     x = tab_n['x']
     y = tab_n['y']
-    xx, yy = np.meshgrid(np.linspace(x.min()+10,x.max()-10,100),
-                         np.linspace(y.min()+10,y.max()-10,100))
+    xx, yy = np.meshgrid(np.linspace(x.min()+10,x.max()-10,nx),
+                         np.linspace(y.min()+10,y.max()-10,ny))
     x,y = xx.ravel().astype(int), yy.ravel().astype(int)
     mag = m + x*0
     ext = 1 + x*0
@@ -193,7 +192,7 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', drz_path='.'
 
     for n,dat in enumerate(dats):
       if 'FakeStars' in dat:
-        ind = n
+        break
 
     dats[n] = f'FakeStars =   {output_dir}_fake_{m}_{out_id}.txt\n'
     dat[n+1] = f'FakeOut =    {output_dir}_fake_{m}_{out_id}.fake\n'
