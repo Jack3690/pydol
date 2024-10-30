@@ -25,7 +25,6 @@ PSFPhotIt = 2           #number of iterations in PSF-fitting photometry (int>=0)
 FitSky = 2              #fit sky? (int/0=no,1=yes,2=small,3=with-phot)
 SkipSky = 1             #spacing for sky measurement (int>0)
 SkySig = 2.25           #sigma clipping for sky (flt>=1)
-NegSky = 1              #allow negative sky values? (0=no,1=yes)
 NoiseMult = 0.10        #noise multiple in imgadd (flt)
 FSat = 0.999            #fraction of saturate limit (flt)
 PosStep = 0.25          #search step for position iterations (flt)
@@ -54,7 +53,7 @@ FakeOut =
 RandomFake = 1          #apply Poisson noise to fake stars? (int 0=no,1=yes)
 FakePad = 0             #minimum distance of fake star from any chip edge to be used
 UsePhot =               #if defined, use alignment, PSF, and aperture corr from photometry
-DiagPlotType = PNG         #format to generate diagnostic plots (PNG, GIF, PS)
+DiagPlotType = PNG      #format to generate diagnostic plots (PNG, GIF, PS)
 xytfile =               #position file for warmstart (str)
 xytpsf =                #reference PSF for image subtraction
 VerboseData = 0         #to write all displayed numbers to a .data file
