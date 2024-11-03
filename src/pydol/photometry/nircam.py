@@ -172,7 +172,7 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.'
 
      # Completeness
     tab = Table.read(tab_path)
-    tab_n = box(tab,ra, dec, width, height, angle=ang)
+    tab_n = box(tab,'ra','dec', ra, dec, width, height, angle=ang)
     x = tab_n['x']
     y = tab_n['y']
     xx, yy = np.meshgrid(np.linspace(x.min()+10,x.max()-10,nx),
