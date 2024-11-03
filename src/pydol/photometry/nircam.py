@@ -226,7 +226,7 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
     # Generating Astropy FITS Table
 
         cmd = f"python {script_dir}/to_table_fake.py --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
-        cmd += " --c f"{output_dir}/out.columns"
+        cmd += f" --c {output_dir}/out.columns"
         cmd += f" --o fake_out_{region_name}_{m}_{out_id}"
         out = subprocess.run([cmd], shell=True)
 
