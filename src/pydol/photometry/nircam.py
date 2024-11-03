@@ -136,7 +136,8 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
     print('NIRCAM Stellar Photometry Completed!')
 
-def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.',
+def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
+                     output_dir='.', tab_path='.',
                 cat_name='', param_file=None,sharp_cut=0.01, crowd_cut=0.5,
                 ra=0,dec=0,width=24/3600,height=24/3600,ang=245, nx=10,ny=10):
     """
@@ -177,13 +178,15 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.'
     y = tab_n['y']
     xx, yy = np.meshgrid(np.linspace(x.min()+10,x.max()-10,nx),
                          np.linspace(y.min()+10,y.max()-10,ny))
-    x,y = xx.ravel().astype(int), yy.ravel().astype(int)
-    mag = m + x*0
+    x,y = xx.ravel().astype(int), yy.ravel().astype(int)             
+    mags = [np.full_like(x, m_) for m_ in m]
     ext = 1 + x*0
     chip = 1 + x*0
-
-    df = pd.DataFrame(zip(ext,chip,x,y,mag),
-                      columns=['ext', 'chip', 'x', 'y', 'mag'])
+    cols = ['ext', 'chip', 'x', 'y']
+    for i in len(m):
+      cols.append('mag_' + str(i))
+    df = pd.DataFrame(zip(ext,chip,x,y,mags),
+                      columns=cols)
     df.to_csv(f'{output_dir}_fake_{m}_{out_id}.txt',sep=' ',
               index=None,header=None)
 
@@ -194,21 +197,22 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.'
       if 'FakeStars' in dat:
         break
 
-    dats[n] = f'FakeStars =   {output_dir}/fake_{m}_{out_id}.txt\n'
-    dats[n+1] = f'FakeOut =    {output_dir}/fake_{m}_{out_id}.fake\n'
-    with open(param_file,'w', encoding='utf-8') as f:
+    dats[n] = f'FakeStars =   {output_dir}/fake_{region_name}_{m}_{out_id}.txt\n'
+    dats[n+1] = f'FakeOut =    {output_dir}/fake_{region_name}_{m}_{out_id}.fake\n'
+    param_file_new = param_file.replace('.param',f'_{region_name}.param')
+    with open(param_file_new,'w', encoding='utf-8') as f:
       f.writelines(dats)
     if os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
         # Running DOLPHOT NIRCAM
-        p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file}"]
+        p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file_new}"]
                             , stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
         while (line := p.stdout.readline()) != "":
           print(line)
     # Generating Astropy FITS Table
 
-        cmd = f"python {script_dir}/to_table_fake.py --o fake_out_{m}_{out_id}"
-        cmd += " --f {output_dir}/o{output_dir}_fake_{m}_{out_id}.fakeut"
+        cmd = f"python {script_dir}/to_table_fake.py --o fake_out_{region_name}_{m}_{out_id}"
+        cmd += " --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
         out = subprocess.run([cmd], shell=True)
 
         phot_table = Table.read(f"{output_dir}/fake_out_{m}_{out_id}.fits")
