@@ -194,8 +194,8 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.'
       if 'FakeStars' in dat:
         break
 
-    dats[n] = f'FakeStars =   {output_dir}_fake_{m}_{out_id}.txt\n'
-    dats[n+1] = f'FakeOut =    {output_dir}_fake_{m}_{out_id}.fake\n'
+    dats[n] = f'FakeStars =   {output_dir}/fake_{m}_{out_id}.txt\n'
+    dats[n+1] = f'FakeOut =    {output_dir}/fake_{m}_{out_id}.fake\n'
     with open(param_file,'w', encoding='utf-8') as f:
       f.writelines(dats)
     if os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
