@@ -195,7 +195,9 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.'
         break
 
     dats[n] = f'FakeStars =   {output_dir}_fake_{m}_{out_id}.txt\n'
-    dat[n+1] = f'FakeOut =    {output_dir}_fake_{m}_{out_id}.fake\n'
+    dats[n+1] = f'FakeOut =    {output_dir}_fake_{m}_{out_id}.fake\n'
+    with open(param_file) as f:
+      f.writelines(dats)
     if os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
         # Running DOLPHOT NIRCAM
         p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file}"]
