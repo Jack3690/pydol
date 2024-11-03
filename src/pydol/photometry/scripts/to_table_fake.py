@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	for i in col:
 		cols_inp.append(i+'_inp')
 	
-	with open(options.columns + '.columns') as f:
+	with open(options.columns) as f:
 		cols = f.readlines()
 		for n, i in enumerate(cols):
 			if 'Measured' in i:
