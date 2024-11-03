@@ -176,19 +176,32 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
     tab_n = box(tab,'ra','dec', ra, dec, width, height, angle=ang)
     x = tab_n['x']
     y = tab_n['y']
-    xx, yy = np.meshgrid(np.linspace(x.min()+10,x.max()-10,nx),
-                         np.linspace(y.min()+10,y.max()-10,ny))
-    x,y = xx.ravel().astype(int), yy.ravel().astype(int)             
-    mags = [np.full_like(x, m_) for m_ in m]
-    ext = 1 + x*0
-    chip = 1 + x*0
-    cols = ['ext', 'chip', 'x', 'y']
+    xx, yy = np.meshgrid(np.linspace(x.min() + 10, x.max() - 10, nx),
+                         np.linspace(y.min() + 10, y.max() - 10, ny))
+    
+    # Flatten and convert to integer
+    x, y = xx.ravel().astype(int), yy.ravel().astype(int)
+    
+    # Create the 'ext' and 'chip' columns directly
+    ext = np.ones_like(x)
+    chip = np.ones_like(x)
+    
+    # Create an array for all 'mag' columns at once
+    mags = np.array([np.full(x.shape, m_) for m_ in m]).T
+    
+    # Build the DataFrame in a single step
+    columns = {
+        'ext': ext,
+        'chip': chip,
+        'x': x,
+        'y': y,
+    }
     for i in range(len(m)):
-      cols.append('mag_' + str(i))
-    df = pd.DataFrame(zip(ext,chip,x,y,mags),
-                      columns=cols)
-    df.to_csv(f'{output_dir}_fake_{m}_{out_id}.txt',sep=' ',
-              index=None,header=None)
+        columns[f'mag_{i}'] = mags[:, i]
+    
+    df = pd.DataFrame(columns)
+    df.to_csv(f'{output_dir}/fake_{region_name}_{m}_{out_id}.txt', 
+              sep=' ', index=False, header=False)
 
     with open(param_file) as f:
       dats = f.readlines()
