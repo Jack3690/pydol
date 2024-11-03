@@ -183,7 +183,7 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
     ext = 1 + x*0
     chip = 1 + x*0
     cols = ['ext', 'chip', 'x', 'y']
-    for i in len(m):
+    for i in range(len(m)):
       cols.append('mag_' + str(i))
     df = pd.DataFrame(zip(ext,chip,x,y,mags),
                       columns=cols)
