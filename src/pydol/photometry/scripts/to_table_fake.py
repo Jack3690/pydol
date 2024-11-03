@@ -13,13 +13,6 @@ if __name__ == "__main__":
 	parser.add_argument("--o", dest='out', default='photometry', type = str, help="Output filename")
 	options = parser.parse_args()
 	out = options.out
-	col = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness',
-		'dir_maj_axis','obj_crowd','type','counts_tot','sky_tot','count_rate','count_rate_err','mag_vega',
-		'mag_ubvri','mag_err','chi','SNR']
-
-	cols_inp = []
-	for i in col:
-		cols_inp.append(i+'_inp')
 	
 	with open(options.columns) as f:
 		cols = f.readlines()
@@ -29,13 +22,15 @@ if __name__ == "__main__":
 				break
 	
 	filts = [cols[11+ i*13].split(f'{options.detector.upper()}_')[-1][:-1] for i in range(n_filt)]
-	
+	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type',]
 	col_filt = ['counts_tot','sky_tot','count_rate','count_rate_err','mag_vega','mag_ubvri','mag_err','chi','SNR','sharpness','roundness','crowd','flags']
 	
-	out_cols = cols_inp
+	out_cols =  col_source
 	for i in filts:
 		for j in col_filt:
 			out_cols.append(j + '_' + i)
+	out_cols_inp = [f"{i}_inp" for i in out_cols]
+	out_cols = out_cols_inp + out_cols
 	
 	with open(options.filename) as f:
 		dat = f.readlines()
