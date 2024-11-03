@@ -250,7 +250,7 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
         for i in SNR_keys:
             phot_table1  = phot_table1[phot_table1[i]>=5]
 
-        phot_table1.write(f'{output_dir}/fake_out_{m}_{out_id}_filt.fits', overwrite=True)
+        phot_table1.write(f'{output_dir}/fake_out_{region_name}_{m}_{out_id}_filt.fits', overwrite=True)
         print('NIRCAM Completeness Completed!')
     else:
       print(f"{output_dir}/{out_id}_photometry.fits NOT FOUND!!")
