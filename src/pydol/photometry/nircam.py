@@ -198,7 +198,8 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
     }
     for i in range(len(m)):
         columns[f'mag_{i}'] = mags[:, i]
-    
+
+    m = '_'.join(map(str,m))
     df = pd.DataFrame(columns)
     df.to_csv(f'{output_dir}/fake_{region_name}_{m}_{out_id}.txt', 
               sep=' ', index=False, header=False)
@@ -224,11 +225,12 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
           print(line)
     # Generating Astropy FITS Table
 
-        cmd = f"python {script_dir}/to_table_fake.py --o fake_out_{region_name}_{m}_{out_id}"
-        cmd += " --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
+        cmd = f"python {script_dir}/to_table_fake.py --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
+        cmd += " --c f"{output_dir}/out.columns"
+        cmd += f" --o fake_out_{region_name}_{m}_{out_id}"
         out = subprocess.run([cmd], shell=True)
 
-        phot_table = Table.read(f"{output_dir}/fake_out_{m}_{out_id}.fits")
+        phot_table = Table.read(f"{output_dir}/fake_out_{region_name}_{m}_{out_id}.fits")
 
         # Filtering stellar photometry catalog using Warfield et.al (2023)
         phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
@@ -248,5 +250,8 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
         for i in SNR_keys:
             phot_table1  = phot_table1[phot_table1[i]>=5]
 
-        phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
-    print('NIRCAM Completeness Completed!')
+        phot_table1.write(f'{output_dir}/fake_out_{m}_{out_id}_filt.fits', overwrite=True)
+        print('NIRCAM Completeness Completed!')
+    else:
+      print(f"{output_dir}/{out_id}_photometry.fits NOT FOUND!!")
+   
