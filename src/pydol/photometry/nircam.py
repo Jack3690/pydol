@@ -115,9 +115,21 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     phot_table['dec'] = coords[:,1]
 
     # Filtering stellar photometry catalog using Warfield et.al (2023) (Default)
-    phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                (phot_table['obj_crowd']<= crowd_cut) &
-                                (phot_table['type'] <= 2)]
+    sharpness_keys = []
+    for key in phot_table.keys():
+        if 'sharpness' in key and 'inp' not in key:
+            sharpness_keys.append(key)
+    for i in sharpness_keys:
+        phot_table1  = phot_table[phot_table[i]<=sharp_cut]
+
+    crowd_keys = []
+    for key in phot_table1.keys():
+        if 'crowd' in key and 'inp' not in key:
+            crowd_keys.append(key)
+    for i in sharpness_keys:
+        phot_table1  = phot_table1[phot_table1[i]<=crowd_cut]
+      
+    phot_table1 = phot_table1[(phot_table1['type'] <= 2)]
     flag_keys = []
     for key in phot_table1.keys():
         if 'flag' in key:
