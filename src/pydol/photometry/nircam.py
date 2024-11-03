@@ -187,7 +187,7 @@ def nircam_phot_comp(crf_files,m=20, filter='f200w',output_dir='.', tab_path='.'
     df.to_csv(f'{output_dir}_fake_{m}_{out_id}.txt',sep=' ',
               index=None,header=None)
 
-    with open([param_file]) as f:
+    with open(param_file) as f:
       dats = f.readlines()
 
     for n,dat in enumerate(dats):
