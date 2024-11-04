@@ -27,9 +27,14 @@ if __name__ == "__main__":
 	
 	out_cols =  col_source
 	for i in filts:
+		for j in col_filt[:-1]:
+			out_cols.append(j + '_' + i)	
+	out_cols_inp = [f"{i}_inp" for i in out_cols]
+
+	out_cols =  col_source
+	for i in filts:
 		for j in col_filt:
 			out_cols.append(j + '_' + i)
-	out_cols_inp = [f"{i}_inp" for i in out_cols]
 	out_cols = out_cols_inp + out_cols
 	
 	with open(options.filename) as f:
