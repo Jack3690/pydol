@@ -25,22 +25,28 @@ if __name__ == "__main__":
 	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type',]
 	col_filt = ['counts_tot','sky_tot','count_rate','count_rate_err','mag_vega','mag_ubvri','mag_err','chi','SNR','sharpness','roundness','crowd','flags']
 	
-	out_cols =  col_source
-	for i in filts:
-		for j in col_filt[:-1]:
-			out_cols.append(j + '_' + i)	
-	out_cols_inp = [f"{i}_inp" for i in out_cols]
+	cols_inp = ['ext_inp','chip_inp','x_inp','y_inp']
 
-	out_cols =  col_source
+	for j in filts:
+	    cols_inp.append(f'mag_vega_{j.upper()}_inp')
+	    
+	cols_out =  col_source.copy()
 	for i in filts:
-		for j in col_filt:
-			out_cols.append(j + '_' + i)
-	out_cols = out_cols_inp + out_cols
+	    for j in col_filt:
+	        cols_out.append(j + '_' + i)
+	        
+	tot_cols = cols_inp  + cols_out
 	
 	with open(options.filename) as f:
 		dat = f.readlines()
 
-	data = np.array([i.split()[:len(out_cols)] for i in dat]).astype(float)
+	start = 4 + len(filts)*16
+	end = start + len(cols_out)
+	
+	dat = np.array([i.split()[:end] for i in dat]).astype(float)
+	mag_index = np.arange(5,len(filts)*16,16).astype(int)
+	data = np.concatenate([dat[:,:4], dat[:,mag_index], dat[:,start:end]], axis=1)
+	
 	df = pd.DataFrame(data,columns=out_cols)
 
 	filename = os.path.split(options.filename)[0]
