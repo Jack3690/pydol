@@ -47,7 +47,7 @@ if __name__ == "__main__":
 	mag_index = np.arange(5,len(filts)*16,16).astype(int)
 	data = np.concatenate([dat[:,:4], dat[:,mag_index], dat[:,start:end]], axis=1)
 	
-	df = pd.DataFrame(data,columns=out_cols)
+	df = pd.DataFrame(data,columns=tot_cols)
 
 	filename = os.path.split(options.filename)[0]
 	if options.format == 'csv':
