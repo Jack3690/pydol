@@ -32,7 +32,7 @@ class jpipe():
                   None
 
         """
-        if n_cores is None or n_cores is > mp.cpu_count()-1:
+        if n_cores is None or n_cores > mp.cpu_count()-1:
             self.n_cores = mp.cpu_count()-1
         else:
             self.n_cores = n_cores
