@@ -13,7 +13,7 @@ client.set_crds_server("https://jwst-crds.stsci.edu")
 
 class jpipe():
     def __init__(self, input_files=[], out_dir='.',
-                 crds_context="jwst_1241.pmap", crds_dir='.'):
+                 crds_context="jwst_1241.pmap", crds_dir='.', n_cores=None):
         """
             Parameters
             ----------
@@ -27,12 +27,16 @@ class jpipe():
 
             crds_context: str,
                           Reference context for JWST pipeline from CRDS.
-
               Returns
               -------
                   None
 
         """
+        if n_cores is None or n_cores is > mp.cpu_count()-1:
+            self.n_cores = mp.cpu_count()-1
+        else:
+            self.n_cores = n_cores
+            
         if os.access(crds_dir,os.W_OK):
             os.makedirs(crds_dir, exist_ok=True)
         else:
@@ -72,7 +76,7 @@ class jpipe():
         # Save the final resulting _rate.fits files
         img1.save_results = True
         #No of cores
-        img1.jump.maximum_cores = f'{mp.cpu_count()-1}'
+        img1.jump.maximum_cores = f'{self.n_cores}'
         # Run the pipeline on an input list of files
         img1(filename)
 
