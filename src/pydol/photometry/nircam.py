@@ -178,7 +178,7 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
       tab_n = tab.copy()
       tab_n['r'] = angular_separation(tab[ra_col]*u.deg, tab[dec_col]*u.deg,
                                       ra*u.deg, dec*u.deg).to(u.deg).value
-      tab_n['r'] = tab_n[tab_n['r']<=width]
+      tab_n = tab_n[tab_n['r']<=width]
       
       x_cen = 0.5*(tab_n['x'].min() + tab['x'].max())
       y_cen = 0.5*(tab_n['y'].min() + tab['y'].max())
