@@ -3,12 +3,15 @@ from glob import glob
 from astropy.table import Table
 from astropy.wcs import WCS
 from astropy.io import fits
+from astropy.coordinates import angular_separation
+from astropy import units as u
 import numpy as np
 import multiprocessing as mp
 from pathlib import Path
 import subprocess
 import pandas as pd
 from .scripts.catalog_filter import box
+
 
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
@@ -136,15 +139,14 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
     print('NIRCAM Stellar Photometry Completed!')
 
-def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
-                     output_dir='.', tab_path='.',
-                cat_name='', param_file=None,sharp_cut=0.01, crowd_cut=0.5,
-                ra=0,dec=0,width=24/3600,height=24/3600,ang=245, nx=10,ny=10):
+def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
+                     output_dir='.', tab_path='.',cat_name='', 
+                     sharp_cut=0.01, crowd_cut=0.5,
+                     ra_col='ra',dec_col='dec',ra=0,dec=0, shape='box',
+                     width=24/3600,height=24/3600,ang=245, nx=10,ny=10):
     """
         Parameters
         ---------
-        crf_files: list,
-                    list of paths to JWST NIRCAM level 2 _crf.fits files
         filter: str,
                 name of the NIRCAM filter being processed
         output_dir: str,
@@ -160,20 +162,28 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
         ------
         None
     """
-    if len(crf_files)<1:
-        raise Exception("crf_files cannot be EMPTY")
-
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-
     if param_file is None or not os.path.exists(param_file) :
       raise Exception("param_file cannot be EMPTY")
+      
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
 
     out_id = filter + cat_name
 
      # Completeness
     tab = Table.read(tab_path)
-    tab_n = box(tab,'ra','dec', ra, dec, width, height, angle=ang)
+    if shape=='box':
+      tab_n = box(tab,ra_col,dec_col, ra, dec, width, height, angle=ang)
+    elif shape=='circle':
+      tab_n = tab.copy()
+      tab_n['r'] = angular_separation(tab[ra_col]*u.deg, tab[dec_col]*u.deg,
+                                      ra*u.deg, dec*u.deg).to(u.deg).value
+      tab_n['r'] = tab_n[tab_n['r']<=width]
+      
+      x_cen = 0.5*(tab_n['x'].min() + tab['x'].max())
+      y_cen = 0.5*(tab_n['y'].min() + tab['y'].max())
+      r_pix_max = np.sqrt( (tab_n['x'] - x_cen)**2 + (tab_n['y'] - y_cen)**2).max()
+      
     x = tab_n['x']
     y = tab_n['y']
     xx, yy = np.meshgrid(np.linspace(x.min() + 10, x.max() - 10, nx),
@@ -181,6 +191,11 @@ def nircam_phot_comp(crf_files,m=[20], filter='f200w', region_name = '3',
     
     # Flatten and convert to integer
     x, y = xx.ravel().astype(int), yy.ravel().astype(int)
+    if shape=='circle':
+      r_pix = np.sqrt((x-x_cen)**2 + (y-y_cen)**2)
+      ind = r_pix<=r_pix_max
+      x = x[ind]
+      y = y[ind]
     
     # Create the 'ext' and 'chip' columns directly
     ext = np.ones_like(x)
