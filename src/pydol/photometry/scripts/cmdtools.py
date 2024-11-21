@@ -327,14 +327,17 @@ def gen_CMD(
                         subset[f"{filters['filt2'].upper()}mag"] + AF2)
                 y_iso = subset[f"{filters['filt3'].upper()}mag"] + AF3 + distance_modulus
                        
+                mask = (y_iso.values[1:]- y_iso.values[:-1])<1
+                mask = np.array([True] + list(mask))
+                mask = np.where(~mask, np.nan, 1)
+                
                 if len(isochrone_params['met'])>1:
                     label = label=age_lin[i]+ f' {Z}'
                 else:
                     label = label=age_lin[i]
                                
-                ax.plot(x_iso, y_iso, lw=plot_settings['lw'],
+                ax.plot(x_iso*mask, y_iso*mask, lw=plot_settings['lw'],
                         label=label,alpha=plot_settings['alpha'],color=colors[i])
-
     # Absolute magnitude
     if other_settings['ab_dist']:
         yticks = ax.get_yticks()
