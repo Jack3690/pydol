@@ -197,6 +197,9 @@ def gen_CMD(
     plot_settings.setdefault('lw',3)
     plot_settings.setdefault('s',0.2)
     plot_settings.setdefault('alpha',1)
+    plot_settings.setdefault('print_met',False)
+    plot_settings.setdefault('legend.ncols',1)
+    
     
     error_settings.setdefault('mag_err_cols', [
         f'mag_err_{filters["filt1"].upper()}',
@@ -314,7 +317,8 @@ def gen_CMD(
             
     if df_iso is not None:
         df_iso = df_iso[(df_iso['label']>=isochrone_params['label_min'])
-                       & (df_iso['label']<=isochrone_params['label_max'])]   
+                       & (df_iso['label']<=isochrone_params['label_max'])]
+                        
         for i,age in enumerate(isochrone_params['ages']):
             t = df_iso[(np.round(df_iso['logAge'],1) == age)]
             for Z in isochrone_params['met']:
@@ -327,13 +331,14 @@ def gen_CMD(
                 mask = np.array([True] + list(mask))
                 mask = np.where(~mask, np.nan, 1)
                 
-                if len(isochrone_params['met'])>1:
+                if len(isochrone_params['met'])>1 or plot_settings['print_met']:
                     label = label=age_lin[i]+ f' {Z}'
                 else:
                     label = label=age_lin[i]
                                
                 ax.plot(x_iso*mask, y_iso*mask, lw=plot_settings['lw'],
                         label=label,alpha=plot_settings['alpha'])
+
     # Absolute magnitude
     if other_settings['ab_dist']:
         yticks = ax.get_yticks()
@@ -420,7 +425,7 @@ def gen_CMD(
     ax.invert_yaxis()
     ax.set_xlabel(f"{filters['filt1'].upper()} - {filters['filt2'].upper()}")
     ax.set_ylabel(filters['filt3'].upper())
-    ax.legend(fontsize=plot_settings['legend.fontsize'])
+    ax.legend(fontsize=plot_settings['legend.fontsize'], ncols = plot_settings['legend.ncols'])
 
     fig.tight_layout()
     return fig, ax, tab
