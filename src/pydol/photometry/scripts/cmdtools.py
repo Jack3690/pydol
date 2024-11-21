@@ -63,7 +63,7 @@ def gen_CMD(
     distance_modulus=29.7415,
     axis_limits={'xlims': [-0.5, 2.5], 'ylims': [18, 28]},
     isochrone_params={'met': 0.02, 'ages': [7., 8., 9.]},
-    plot_settings={'alpha': 1, 's': 0.2, 'lw': 3, 'ref_xpos': -0.25},
+    plot_settings={'alpha': 1, 's': 0.2, 'lw': 3},
     error_settings={ 'mag_err_lim': 0.2, 'show_err_model': False, 'ref_xpos': -0.5},
     kde_contours={'gen_kde': False, 'gen_contours': False},
     other_settings={'ab_dist': True, 'skip_data': False, 'show_err_model':False},
@@ -131,13 +131,13 @@ def gen_CMD(
         - 'alpha': Transparency for isochrone lines.
         - 's': Marker size for scatter plots.
         - 'lw': Line width for isochrones.
-        - 'ref_xpos': Reference x-position for error bars.
 
     error_settings : dict, optional
         Settings for error handling and plotting. Keys:
         - 'mag_err_cols': Columns for magnitude errors. Defaults to filter-based columns.
         - 'mag_err_lim': Maximum allowable magnitude error.
         - 'show_err_model': Show error models during plotting.
+        - 'ref_xpos': Reference x-position for error bars.
 
     kde_contours : dict, optional
         Settings for KDE or contour plots. Keys:
@@ -166,24 +166,52 @@ def gen_CMD(
     """
     
     # Fill in default values for nested dictionaries
+    filters.setdefault('filt1','f115w')
+    filters.setdefault('filt2','f200w')
     filters.setdefault('filt3', filters['filt2'])
+    
+    positions.setdefault('ra_col','ra')
+    positions.setdefault('dec_col','dec')
+    positions.setdefault('ra_cen',0)
+    positions.setdefault('dec_cen',0)
+    
+    region.setdefault('r_in',0)
+    region.setdefault('r_out',10)
+    region.setdefault('spatial_filter','circle')
+    
+    extinction.setdefault('Av',0.19)
+    extinction.setdefault('Av_',3)
+    extinction.setdefault('Av_x',3)
+    extinction.setdefault('Av_y',19)
+    
+    axis_limits.setdefault('xlims', [-0.5, 2.5])
+    axis_limits.setdefault('ylims', [18, 28])
+    
+    isochrone_params.setdefault('label_min', 0)
+    isochrone_params.setdefault('label_max', 10)
+    isochrone_params.setdefault('met', [0.02])
+    isochrone_params.setdefault('age', [7,8,9])
+    
+    plot_settings.setdefault('Av.fontsize',15)
+    plot_settings.setdefault('legend.fontsize',15)
+    plot_settings.setdefault('lw',3)
+    plot_settings.setdefault('s',0.2)
+    plot_settings.setdefault('alpha',1)
     
     error_settings.setdefault('mag_err_cols', [
         f'mag_err_{filters["filt1"].upper()}',
         f'mag_err_{filters["filt2"].upper()}',
         f'mag_err_{filters["filt3"].upper()}',])
     
-    isochrone_params.setdefault('label_min', 0)
-    isochrone_params.setdefault('label_max', 10)
-    isochrone_params.setdefault('met', [0.02])
-    
-    plot_settings.setdefault('Av.fontsize',15)
-    plot_settings.setdefault('legend.fontsize',15)
+    error_settings.setdefault('mag_err_lim',0.2)
+    error_settings.setdefault('ref_xpos',-0.25)
     
     kde_contours.setdefault('gen_kde',False)
     kde_contours.setdefault('gen_contours',False)
     
-    error_settings.setdefault('mag_err_lim',0.2)
+    other_settings.setdefault('ab_dist',True)
+    other_settings.setdefault('skip_data',False)
+    other_settings.setdefault('show_err_model',False)
 
     # Filter table by magnitude errors
     for col in error_settings['mag_err_cols']:
@@ -288,8 +316,11 @@ def gen_CMD(
               '#7f7f7f', '#bcbd22', '#17becf', '#8c3c3c', '#7d6d2b', '#5c5b8a', '#4b4e3b', 
               '#f7b6d2', '#393b79', '#7f5b84', '#c49c94', '#f0f0f0', '#3d85c6']
     if df_iso is not None:
+        df_iso = df_iso[(df_iso['label']>=isochrone_params['label_min'])
+                       & (df_iso['label']<=isochrone_params['label_max'])]
+                        
         for i,age in enumerate(isochrone_params['ages']):
-            t = df_iso[df_iso['logAge'] == age]
+            t = df_iso[(df_iso['logAge'] == age)]
             for Z in isochrone_params['met']:
                 subset = t[t['Zini'] == Z]
                 x_iso = subset[f"{filters['filt1'].upper()}mag"] + AF1 - (
