@@ -312,15 +312,11 @@ def gen_CMD(
             i -= 9
             age_lin.append(f'{np.round(10**i,1)} Gyr')
             
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2',
-              '#7f7f7f', '#bcbd22', '#17becf', '#8c3c3c', '#7d6d2b', '#5c5b8a', '#4b4e3b', 
-              '#f7b6d2', '#393b79', '#7f5b84', '#c49c94', '#f0f0f0', '#3d85c6']
     if df_iso is not None:
         df_iso = df_iso[(df_iso['label']>=isochrone_params['label_min'])
-                       & (df_iso['label']<=isochrone_params['label_max'])]
-                        
+                       & (df_iso['label']<=isochrone_params['label_max'])]   
         for i,age in enumerate(isochrone_params['ages']):
-            t = df_iso[(df_iso['logAge'] == age)]
+            t = df_iso[(np.round(df_iso['logAge'],1) == age)]
             for Z in isochrone_params['met']:
                 subset = t[t['Zini'] == Z]
                 x_iso = subset[f"{filters['filt1'].upper()}mag"] + AF1 - (
@@ -337,7 +333,7 @@ def gen_CMD(
                     label = label=age_lin[i]
                                
                 ax.plot(x_iso*mask, y_iso*mask, lw=plot_settings['lw'],
-                        label=label,alpha=plot_settings['alpha'],color=colors[i])
+                        label=label,alpha=plot_settings['alpha'])
     # Absolute magnitude
     if other_settings['ab_dist']:
         yticks = ax.get_yticks()
