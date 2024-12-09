@@ -173,7 +173,7 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
      # Completeness
     tab = Table.read(tab_path)
     if shape=='box':
-      tab_n = box(tab,ra_col,dec_col, ra, dec, width, height, angle=ang)
+      tab_n = box(tab,ra_col,dec_col, ra, dec, 0,0, width, height, angle=ang)
     elif shape=='circle':
       tab_n = tab.copy()
       tab_n['r'] = angular_separation(tab[ra_col]*u.deg, tab[dec_col]*u.deg,
