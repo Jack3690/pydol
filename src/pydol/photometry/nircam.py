@@ -238,8 +238,6 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
                              text=True)
         while (line := p.stdout.readline()) != "":
           print(line)
-    else:
-      raise Exception(f"{output_dir}/{out_id}_photometry.fits doesn't exists!!!")
     # Generating Astropy FITS Table
 
         cmd = f"python {script_dir}/to_table_fake.py --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
