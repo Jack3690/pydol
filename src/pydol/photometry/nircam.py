@@ -140,7 +140,7 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     print('NIRCAM Stellar Photometry Completed!')
 
 def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
-                     output_dir='.', tab_path='.',cat_name='', 
+                     output_dir='.', tab_path='.', drz_path=None,cat_name='', 
                      sharp_cut=0.01, crowd_cut=0.5,
                      ra_col='ra',dec_col='dec',ra=0,dec=0, shape='box',
                      width=24/3600,height=24/3600,ang=245, nx=10,ny=10):
@@ -246,17 +246,18 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
         out = subprocess.run([cmd], shell=True)
 
         phot_table = Table.read(f"{output_dir}/fake_out_{region_name}_{m}_{out_id}.fits")
-      
+
+        if drz_path is not None:
         # Assingning RA-Dec using reference image
-        hdu = fits.open(f"{drz_path}.fits")[1]
-    
-        wcs = WCS(hdu.header)
-        positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
-    
-        coords = np.array(wcs.pixel_to_world_values(positions))
-    
-        phot_table['ra']  = coords[:,0]
-        phot_table['dec'] = coords[:,1]
+          hdu = fits.open(f"{drz_path}.fits")[1]
+      
+          wcs = WCS(hdu.header)
+          positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
+      
+          coords = np.array(wcs.pixel_to_world_values(positions))
+      
+          phot_table['ra']  = coords[:,0]
+          phot_table['dec'] = coords[:,1]
 
         # Filtering stellar photometry catalog using Warfield et.al (2023)
         phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
