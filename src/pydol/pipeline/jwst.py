@@ -12,7 +12,7 @@ from pathlib import Path
 client.set_crds_server("https://jwst-crds.stsci.edu")
 
 class jpipe():
-    def __init__(self, input_files=[], out_dir='.',
+    def __init__(self, input_files=[], out_dir='.', filter='',
                  crds_context="jwst_1241.pmap", crds_dir='.', n_cores=None):
         """
             Parameters
@@ -32,6 +32,7 @@ class jpipe():
                   None
 
         """
+        self.filter_name=filter
         if n_cores is None or n_cores > mp.cpu_count()-1:
             self.n_cores = mp.cpu_count()-1
         else:
@@ -124,6 +125,8 @@ class jpipe():
         img3.output_dir = self.out_dir + '/stage3/'
         # Save the final resulting _rate.fits files
         img3.save_results = True
+        # Output file name
+        img3.output_file = self.filter_name
         # Run the pipeline on an input list of files
         img3(filenames)
 
