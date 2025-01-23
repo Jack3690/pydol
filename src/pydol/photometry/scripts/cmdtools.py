@@ -22,7 +22,7 @@ font1 = {'family': 'sans-serif', 'color': 'black', 'weight': 'normal', 'size': '
 font2 = {'family': 'sans-serif', 'color': 'black', 'weight': 'normal', 'size': '25'}
 
 plt.rcParams.update({
-    "text.usetex": True,
+  #  "text.usetex": True,
     "font.family": "sans-serif",
     "font.sans-serif": ["Helvetica"]})
 
