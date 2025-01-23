@@ -145,7 +145,7 @@ class jpipe():
         rate_files_ = [f for f in rate_files if not os.path.exists(f.replace('stage1', 'stage2').replace('rate', 'cal'))]
         
         if len(rate_files_)>0:
-            with mp.Pool(mp.cpu_count()-1) as p:
+            with mp.Pool(self.n_cores) as p:
                 p.map(self.stage2_pipeline, rate_files_)
                 
         # Stage 3
