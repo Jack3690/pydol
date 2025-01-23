@@ -145,9 +145,12 @@ class jpipe():
         rate_files_ = [f for f in rate_files if not os.path.exists(f.replace('stage1', 'stage2').replace('rate', 'cal'))]
         
         if len(rate_files_)>0:
-            with mp.Pool(self.n_cores) as p:
-                p.map(self.stage2_pipeline, rate_files_)
-                
+            if self.n_cores>1:
+                with mp.Pool(self.n_cores) as p:
+                    p.map(self.stage2_pipeline, rate_files_)
+            else:
+                for f in rate_files_:
+                    self.stage2_pipeline(f)              
         # Stage 3
         cal_files = [f.replace('stage1', 'stage2').replace('rate', 'cal') for f in rate_files]
         cal_files_ = [f for f in cal_files if not os.path.exists(f.replace('stage2', 'stage3').replace('cal', 'crf'))]
