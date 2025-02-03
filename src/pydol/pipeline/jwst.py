@@ -13,7 +13,8 @@ client.set_crds_server("https://jwst-crds.stsci.edu")
 
 class jpipe():
     def __init__(self, input_files=[], out_dir='.', filter='',
-                 crds_context="jwst_1241.pmap", crds_dir='.', n_cores=None):
+                 crds_context="jwst_1241.pmap", crds_dir='.', n_cores=None,
+                 **kwargs):
         """
             Parameters
             ----------
@@ -32,6 +33,9 @@ class jpipe():
                   None
 
         """
+        self.config = {'1byf_corr' : False,
+                       'snowball_corr' : True}
+        self.config.update(kwargs)
         self.filter_name=filter
         if n_cores is None or n_cores > mp.cpu_count()-1:
             self.n_cores = mp.cpu_count()-1
@@ -71,7 +75,9 @@ class jpipe():
         # Instantiate the pipeline
         img1 = Detector1Pipeline()   
         # Snowball Removal (M82 Group)
-        img1.jump.expand_large_events = True
+        img1.jump.expand_large_events = self.config['snowball_corr']
+        # 1/f noise correction
+        img1.clean_flicker_noise.skip = self.config['1byf_corr']       
         # Specify where the output should go
         img1.output_dir = self.out_dir + '/stage1/'
         # Save the final resulting _rate.fits files
@@ -100,12 +106,7 @@ class jpipe():
         # Run the pipeline on an input list of files
         img2(filename)
 
-        # TBD: Add 1/f noise subtraction 
-        #
-        #
-        #
-        #
-
+        
     def stage3_pipeline(self, filenames):
         """
             Parameters
