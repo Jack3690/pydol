@@ -49,7 +49,7 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     if param_file is None or not os.path.exists(param_file) :
       print("Using Default params")
       edit_params = True
-      param_file = param_dir_default + '/nircam_dolphot.param'
+      param_file = param_dir_default + '/nircam_sw_dolphot.param'
     else:
       edit_params = False
 
