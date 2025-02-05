@@ -16,20 +16,20 @@ from .scripts.catalog_filter import box
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
-def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
+def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
                 cat_name='', param_file=None,sharp_cut=0.01,
                 crowd_cut=0.5):
     """
         Parameters
         ---------
-        crf_files: list,
-                    list of paths to JWST NIRCAM level 3 _crf.fits files
+        input_files: list,
+                    list of paths to JWST NIRCAM level 3 _cal.fits or _crf.fits files
         filter: str,
                 name of the NIRCAM filter being processed
         output_dir: str,
                     path to output directory.
                     Recommended: /photometry/
-        drz_path: str,
+        ref_img_path: str,
                   path to level 3 drizzled image (_i2d.fits) image.
                   It is recommended to be inside /photometry/
         cat_name: str,
@@ -39,10 +39,10 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
         ------
         None
     """
-    if len(crf_files)<1:
-        raise Exception("crf_files cannot be EMPTY")
+    if len(input_files)<1:
+        raise Exception("input_files cannot be EMPTY")
 
-    subprocess.run([f"nircammask {drz_path}.fits"], shell=True)
+    subprocess.run([f"nircammask {ref_img_path}.fits"], shell=True)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -57,7 +57,7 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
 
     # Generating directories
     exps = []
-    for i,f in enumerate(crf_files):
+    for i,f in enumerate(input_files):
         out_dir = f.split('/')[-1].split('.')[0]
 
         if not os.path.exists(f'{output_dir}/{out_dir}'):
@@ -83,7 +83,7 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
                   dat = f.readlines()
 
       dat[0] = f'Nimg = {len(exps)}                #number of images (int)\n'
-      dat[4] = f'img0_file = {drz_path}\n'
+      dat[4] = f'img0_file = {ref_img_path}\n'
       dat[5] = ''
 
       for i,f in enumerate(exps):
@@ -107,7 +107,7 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
 
     # Assingning RA-Dec using reference image
-    hdu = fits.open(f"{drz_path}.fits")[1]
+    hdu = fits.open(f"{ref_img_path}.fits")[1]
 
     wcs = WCS(hdu.header)
     positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
@@ -140,7 +140,7 @@ def nircam_phot(crf_files, filter='f200w',output_dir='.', drz_path='.',
     print('NIRCAM Stellar Photometry Completed!')
 
 def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
-                     output_dir='.', tab_path='.', drz_path=None,cat_name='', 
+                     output_dir='.', tab_path='.', ref_img_path=None,cat_name='', 
                      sharp_cut=0.01, crowd_cut=0.5,
                      ra_col='ra',dec_col='dec',ra=0,dec=0, shape='box',
                      width=24/3600,height=24/3600,ang=245, nx=10,ny=10):
@@ -247,9 +247,9 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
 
         phot_table = Table.read(f"{output_dir}/fake_out_{region_name}_{m}_{out_id}.fits")
 
-        if drz_path is not None:
+        if ref_img_path is not None:
         # Assingning RA-Dec using reference image
-          hdu = fits.open(f"{drz_path}.fits")[1]
+          hdu = fits.open(f"{ref_img_path}.fits")[1]
       
           wcs = WCS(hdu.header)
           positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
