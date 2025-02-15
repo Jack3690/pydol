@@ -18,11 +18,11 @@ if __name__ == "__main__":
 		cols = f.readlines()
 		for n, i in enumerate(cols):
 			if 'Measured' in i:
-				n_filt = (n - 11)//13
+				n_filt = (n - 12)//13
 				break
 	
-	filts = [cols[11+ i*13].split(f'{options.detector.upper()}_')[-1][:-1] for i in range(n_filt)]
-	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type',]
+	filts = [cols[12+ i*13].split(f'{options.detector.upper()}_')[-1][:-1] for i in range(n_filt)]
+	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type', 'pass_det']
 	col_filt = ['counts_tot','sky_tot','count_rate','count_rate_err','mag_vega','mag_ubvri','mag_err','chi','SNR','sharpness','roundness','crowd','flags']
 	
 	cols_inp = ['ext_inp','chip_inp','x_inp','y_inp']
