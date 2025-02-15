@@ -18,27 +18,35 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 plt.rcParams['axes.titlesize'] = plt.rcParams['axes.labelsize'] = 35
 plt.rcParams['xtick.labelsize'] = plt.rcParams['ytick.labelsize'] = 35
 
-font1 = {'family': 'sans-serif', 'color': 'black', 'weight': 'normal', 'size': '15'}
-font2 = {'family': 'sans-serif', 'color': 'black', 'weight': 'normal', 'size': '25'}
-
+try:
+  subprocess.run(["latex", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+  usetex = True
+except:
+  print("Latex not installed")
+  usetex = False
+  
 plt.rcParams.update({
-  #  "text.usetex": True,
+    "text.usetex": usetex,
     "font.family": "sans-serif",
     "font.sans-serif": ["Helvetica"]})
 
-Av_dict = { 
+Av_dict = { # WFC3
             'f275w': 2.02499,
             'f336w': 1.67536,
-            'f435w': 1.33879,
-            'f555w': 1.03065,
-            'f814w': 0.59696,
+            'f438w': 1.34148,
+            'f606w': 0.90941,
+            'uf814w': 0.59845
+            
+            # JWST-NIRCAM
             'f115w': 0.419,
             'f150w': 0.287,
             'f200w': 0.195,
-    
-            'f438w': 1.34148,
-            'f606w': 0.90941,
-            'f814w': 0.59845
+            'f356w': 0.099,
+            'f444w': 0.083,
+            # WFC2
+            'f435w': 1.33879,
+            'f555w': 1.03065,
+            'f814w': 0.59696,
           }
 
 def running_avg(x,y, nbins=100, mode='median'):
