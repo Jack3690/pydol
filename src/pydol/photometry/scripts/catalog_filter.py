@@ -9,7 +9,7 @@ from astropy.coordinates import Angle
 def box(catalog_data,ra_column, dec_column, ra_center, dec_center,
         width_in=24/3600, height_in=24/3600, 
         width_out=24/3600, height_out=24/3600, 
-        angle=245.00492):
+        angle=245.00492, show_output=False):
     
     # Convert catalog RA and Dec to SkyCoord object
     coords = SkyCoord(ra=catalog_data[ra_column].value * u.deg,
@@ -52,12 +52,13 @@ def box(catalog_data,ra_column, dec_column, ra_center, dec_center,
     filtered_catalog = catalog_data[mask]
 
     # Print the number of selected objects
-    print(f"Number of objects in the selected region: {len(filtered_catalog)}")
+    if show_output:
+            print(f"Number of objects in the selected region: {len(filtered_catalog)}")
     
     return filtered_catalog
 
 def ellipse(catalog_data, ra_column, dec_column, ra_center, dec_center, angle=0, a1=1, b1=0,
-           a2=1,b2=1):
+           a2=1,b2=1, show_output=False):
 
     # Convert catalog RA and Dec to SkyCoord object
     coords = SkyCoord(ra=catalog_data[ra_column].value * u.deg,
@@ -92,6 +93,7 @@ def ellipse(catalog_data, ra_column, dec_column, ra_center, dec_center, angle=0,
     filtered_catalog = catalog_data[mask]
     
     # Print the number of selected objects
-    print(f"Number of objects in the selected region: {len(filtered_catalog)}")
+    if show_output:
+            print(f"Number of objects in the selected region: {len(filtered_catalog)}")
     
     return filtered_catalog
