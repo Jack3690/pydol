@@ -8,6 +8,7 @@ from astropy.modeling import models, fitting
 import seaborn as sb
 from .catalog_filter import box, ellipse
 from matplotlib.colors import LinearSegmentedColormap
+import subprocess
 import pandas as pd
 
 sb.set_style('white')
