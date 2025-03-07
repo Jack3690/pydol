@@ -8,6 +8,8 @@ import multiprocessing as mp
 from pathlib import Path
 import subprocess
 import pandas as pd
+import astropy.units as u
+from astropy.coordinates import angular_separation
 from .scripts.catalog_filter import box
 
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
