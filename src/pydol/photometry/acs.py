@@ -204,7 +204,7 @@ def acs_phot_comp(param_file=None, m=[20], filter='f814w', region_name = '3',
       y = y[ind]
     
     # Create the 'ext' and 'chip' columns directly
-    ext = np.ones_like(x)
+    ext = np.zeros_like(x)
     chip = np.ones_like(x)
     
     # Create an array for all 'mag' columns at once
