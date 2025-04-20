@@ -276,7 +276,7 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
                 SNR_keys.append(key)
         for i in SNR_keys:
             phot_table1  = phot_table1[phot_table1[i]>=SNR_min]
-
+        phot_table.write(f"{output_dir}/fake_out_{region_name}_{m}_{out_id}.fits", overwrite=True)
         phot_table1.write(f'{output_dir}/fake_out_{region_name}_{m}_{out_id}_filt.fits', overwrite=True)
         print('NIRCAM Completeness Completed!')
     else:
