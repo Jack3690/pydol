@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.interpolate import interp1d
 
 Av_dict = { 
             'f275w': 2.02499,
@@ -67,19 +68,20 @@ def sample_IMF(M_tot):
 
     return ms
     
-def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, mag_det=29):
+def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, mag_det=29,
+              filt1='F115Wmag', filt2='F150Wmag', filt3='F200Wmag'):
     
     df_test = df_cmd[(np.round(df_cmd['logAge'],1)==age) 
                                  & (df_cmd['Zini']==met) 
                                  &  (df_cmd['label']<9) ].copy()
     
-    df_test['F115Wmag'] = df_test['F115Wmag'] + DM  + Av_dict['f115w']*Av
-    df_test['F150Wmag'] = df_test['F150Wmag'] + DM  + Av_dict['f150w']*Av
-    df_test['F200Wmag'] = df_test['F200Wmag'] + DM  + Av_dict['f200w']*Av
+    df_test[filt1] = df_test[filt1] + DM  + Av_dict[filt1.lower()]*Av
+    df_test[filt2] = df_test[filt2] + DM  + Av_dict[filt2.lower()]*Av
+    df_test[filt3] = df_test[filt3] + DM  + Av_dict[filt3.lower()]*Av
     
-    df_test = df_test[(df_test['F115Wmag']<=mag_det) 
-                    & (df_test['F150Wmag']<=mag_det) 
-                    & (df_test['F200Wmag']<=mag_det)]    
+    df_test = df_test[(df_test[filt1]<=mag_det) 
+                    & (df_test[filt2]<=mag_det) 
+                    & (df_test[filt3]<=mag_det)]    
 
     mini = df_test['Mini'].values
     mfin = df_test['Mass'].values
@@ -100,9 +102,9 @@ def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, ma
         sampled_masses = sample_IMF(mass)
         sampled_masses = sampled_masses[sampled_masses>=m_lim]
     
-    f115w = []
-    f150w = []
-    f200w = []
+    filt1_mag = []
+    filt2_mag = []
+    filt3_mag = []
     
     for i in np.unique(l): 
         l_ind = l==i
@@ -116,21 +118,21 @@ def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, ma
         m_ind = np.argsort(m1)
         m1    = m1[m_ind]
         
-        f115w_iso = df_test['F115Wmag'].values[l_ind][m_ind]
-        f150w_iso = df_test['F150Wmag'].values[l_ind][m_ind]
-        f200w_iso = df_test['F200Wmag'].values[l_ind][m_ind]
+        filt1_iso = df_test[filt1].values[l_ind][m_ind]
+        filt2_iso = df_test[filt2].values[l_ind][m_ind]
+        filt3_iso = df_test[filt3].values[l_ind][m_ind]
         
-        f115w_func = lambda x: np.interp(x,m1,f115w_iso)
-        f150w_func = lambda x: np.interp(x,m1,f150w_iso)
-        f200w_func = lambda x: np.interp(x,m1,f200w_iso)
+        filt1_func = lambda x: np.interp(x,m1,filt1_iso)
+        filt2_func = lambda x: np.interp(x,m1,filt2_iso)
+        filt3_func = lambda x: np.interp(x,m1,filt3_iso)
         
         ind_mass = (sampled_masses>=m_low) &  (sampled_masses<=m_up) 
 
         sampled_masses_sub = sampled_masses[ind_mass]
         sampled_masses = sampled_masses[~ind_mass]
         
-        f115w += list(f115w_func(sampled_masses_sub))
-        f150w += list(f150w_func(sampled_masses_sub))
-        f200w += list(f200w_func(sampled_masses_sub))
+        filt1_mag += list(filt1_func(sampled_masses_sub))
+        filt2_mag += list(filt2_func(sampled_masses_sub))
+        filt3_mag += list(filt3_func(sampled_masses_sub))
         
-    return np.array(f115w), np.array(f150w), np.array(f200w)
+    return np.array(filt1_mag), np.array(filt2_mag), np.array(filt3_mag)
