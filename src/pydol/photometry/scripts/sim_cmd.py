@@ -136,5 +136,3 @@ def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, ma
         filt3_mag += list(filt3_func(sampled_masses_sub))
         
     return np.array(filt1_mag), np.array(filt2_mag), np.array(filt3_mag)
-        
-    return np.array(filt1_mag), np.array(filt2_mag), np.array(filt3_mag)
