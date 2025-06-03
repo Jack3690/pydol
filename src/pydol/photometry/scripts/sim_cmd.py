@@ -122,9 +122,9 @@ def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, ma
         filt2_iso = df_test[filt2 + 'mag'].values[l_ind][m_ind]
         filt3_iso = df_test[filt3 + 'mag'].values[l_ind][m_ind]
         
-        filt1_func = lambda x: np.interp(x,m1,filt1_iso)
-        filt2_func = lambda x: np.interp(x,m1,filt2_iso)
-        filt3_func = lambda x: np.interp(x,m1,filt3_iso)
+        filt1_func = interp1d(m1,filt1_iso)
+        filt2_func = interp1d(m1,filt2_iso)
+        filt3_func = interp1d(m1,filt3_iso)
         
         ind_mass = (sampled_masses>=m_low) &  (sampled_masses<=m_up) 
 
@@ -134,5 +134,7 @@ def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, ma
         filt1_mag += list(filt1_func(sampled_masses_sub))
         filt2_mag += list(filt2_func(sampled_masses_sub))
         filt3_mag += list(filt3_func(sampled_masses_sub))
+        
+    return np.array(filt1_mag), np.array(filt2_mag), np.array(filt3_mag)
         
     return np.array(filt1_mag), np.array(filt2_mag), np.array(filt3_mag)
