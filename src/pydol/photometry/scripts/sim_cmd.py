@@ -92,7 +92,7 @@ def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, ma
         sampled_masses = []
         for i in range(iters):
             masses = sample_IMF(1e7)
-            masses[masses>=m_lim]
+            masses = masses[masses>=m_lim]
             sampled_masses.append(masses)
         
         sampled_masses = np.array(sampled_masses)
