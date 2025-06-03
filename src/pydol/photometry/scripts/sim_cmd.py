@@ -69,19 +69,19 @@ def sample_IMF(M_tot):
     return ms
     
 def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, mag_det=29,
-              filt1='F115Wmag', filt2='F150Wmag', filt3='F200Wmag'):
+              filt1='F115W', filt2='F150W', filt3='F200W'):
     
     df_test = df_cmd[(np.round(df_cmd['logAge'],1)==age) 
                                  & (df_cmd['Zini']==met) 
                                  &  (df_cmd['label']<9) ].copy()
     
-    df_test[filt1] = df_test[filt1] + DM  + Av_dict[filt1.lower()]*Av
-    df_test[filt2] = df_test[filt2] + DM  + Av_dict[filt2.lower()]*Av
-    df_test[filt3] = df_test[filt3] + DM  + Av_dict[filt3.lower()]*Av
+    df_test[filt1 + 'mag'] = df_test[filt1 + 'mag'] + DM  + Av_dict[filt1.lower()]*Av
+    df_test[filt2 + 'mag'] = df_test[filt2 + 'mag'] + DM  + Av_dict[filt2.lower()]*Av
+    df_test[filt3 + 'mag'] = df_test[filt3 + 'mag'] + DM  + Av_dict[filt3.lower()]*Av
     
-    df_test = df_test[(df_test[filt1]<=mag_det) 
-                    & (df_test[filt2]<=mag_det) 
-                    & (df_test[filt3]<=mag_det)]    
+    df_test = df_test[(df_test[filt1 + 'mag']<=mag_det) 
+                    & (df_test[filt2 + 'mag']<=mag_det) 
+                    & (df_test[filt3 + 'mag']<=mag_det)]    
 
     mini = df_test['Mini'].values
     mfin = df_test['Mass'].values
@@ -118,9 +118,9 @@ def sample_iso(mass=1e7, df_cmd=None, age=10.0, met=0.002, DM=29.81, Av=0.19, ma
         m_ind = np.argsort(m1)
         m1    = m1[m_ind]
         
-        filt1_iso = df_test[filt1].values[l_ind][m_ind]
-        filt2_iso = df_test[filt2].values[l_ind][m_ind]
-        filt3_iso = df_test[filt3].values[l_ind][m_ind]
+        filt1_iso = df_test[filt1 + 'mag'].values[l_ind][m_ind]
+        filt2_iso = df_test[filt2 + 'mag'].values[l_ind][m_ind]
+        filt3_iso = df_test[filt3 + 'mag'].values[l_ind][m_ind]
         
         filt1_func = lambda x: np.interp(x,m1,filt1_iso)
         filt2_func = lambda x: np.interp(x,m1,filt2_iso)
