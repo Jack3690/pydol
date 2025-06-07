@@ -86,8 +86,12 @@ def ellipse(catalog_data, ra_column, dec_column, ra_center, dec_center, angle=0,
     rotated_offsets = np.dot(rotation_matrix, np.vstack((offset_ra, offset_dec)))
 
     # Filter points within the rotated ellipse
-    mask = (rotated_offsets[0]**2/a1**2 + rotated_offsets[1]**2/b1**2  >= 1)
-    mask = mask &  (rotated_offsets[0]**2/a2**2 + rotated_offsets[1]**2/b2**2  <= 1)
+    if a1!=0 and b1!=0:
+            mask = (rotated_offsets[0]**2/a1**2 + rotated_offsets[1]**2/b1**2  >= 1)
+            mask = mask &  (rotated_offsets[0]**2/a2**2 + rotated_offsets[1]**2/b2**2  <= 1)
+            
+    else:
+            mask = (rotated_offsets[0]**2/a2**2 + rotated_offsets[1]**2/b2**2  <= 1)        
 
     # Extract the filtered data
     filtered_catalog = catalog_data[mask]
