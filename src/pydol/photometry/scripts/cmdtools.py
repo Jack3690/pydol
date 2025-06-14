@@ -441,130 +441,258 @@ def gen_CMD(
     fig.tight_layout()
     return fig, ax, tab
                      
-def gen_CMD_xcut(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1', dec_col= 'dec_1',
-                 ra_cen=0, dec_cen=0, r_in=0, r_out=24, sqr_field=False, Av=0.19,
-                 mag_err_cols = None,  dismod=29.95, mag_err_lim=0.2,label_min=0, 
-                 label_max=10, cmd=None,  Av_=3,  Av_x=2, Av_y=22,  xlims=[-0.5,2.5], ylims=[18,30], 
-                 ang=245.00492 , age=9.0,met=0.02,  fit_slope=False, cmd_ylo=None, cmd_yhi=None, cmd_xlo = None, 
-                 cmd_xhi= None, y_lo = 22, y_hi=26.5, dy=0.5, dx=0.5, rgb_xlo=0.5,rgb_xhi=2,
-                 rgb_ylo=23, rgb_yhi=26, fit_isochrone=True, fig=None, ax=None,s=5,lw=3):
+def gen_CMD_xcut(tab,
+                df_iso = None,
+                filters={'filt1': 'f115w', 'filt2': 'f150w'},
+                positions={'ra_col': 'ra', 'dec_col': 'dec', 'ra_cen': 0, 'dec_cen': 0},
+                region={'r_in': 0, 'r_out': 24, 'spatial_filter': 'circle','ang': 245.00492},
+                extinction={'Av': 0.19, 'Av_': 3, 'Av_x': 2, 'Av_y': 19},
+                distance_modulus=29.7415,
+                axis_limits={'xlims': [-0.5, 2.5], 'ylims': [18, 28]},
+                isochrone_params={'met': 0.02, 'ages': [7., 8., 9.]},
+                plot_settings={'alpha': 1, 's': 0.2, 'lw': 3, 'cmap':'jet'},
+                error_settings={ 'mag_err_lim': 0.2, 'show_err_model': False, 'ref_xpos': -0.5},
+                kde_contours={'gen_kde': False, 'gen_contours': False, 'kde_bin': 200j},
+                other_settings={'ab_dist': True, 'skip_data': False, 'show_err_model':False},
+                x_cut_settings= {},                  
+                fig=None,
+                ax=None):
     
-    if filt3 is None:
-        filt3 = filt2
+    filters.setdefault('filt1','f115w')
+    filters.setdefault('filt2','f200w')
+    filters.setdefault('filt3', filters['filt2'])
+    
+    positions.setdefault('ra_col','ra')
+    positions.setdefault('dec_col','dec')
+    positions.setdefault('ra_cen',0)
+    positions.setdefault('dec_cen',0)
+    
+    region.setdefault('r_in',0)
+    region.setdefault('r_out',10)
+    region.setdefault('spatial_filter','circle')
+    
+    extinction.setdefault('Av',0.19)
+    extinction.setdefault('Av_',3)
+    extinction.setdefault('Av_x',3)
+    extinction.setdefault('Av_y',19)
+    
+    axis_limits.setdefault('xlims', [-0.5, 2.5])
+    axis_limits.setdefault('ylims', [18, 28])
+    
+    isochrone_params.setdefault('label_min', 0)
+    isochrone_params.setdefault('label_max', 10)
+    isochrone_params.setdefault('met', 0.002)
+    isochrone_params.setdefault('age', 10)
+    
+    plot_settings.setdefault('Av.fontsize',15)
+    plot_settings.setdefault('legend.fontsize',15)
+    plot_settings.setdefault('lw',3)
+    plot_settings.setdefault('s',0.2)
+    plot_settings.setdefault('alpha',1)
+    plot_settings.setdefault('print_met',False)
+    plot_settings.setdefault('legend.ncols',1)
+    plot_settings.setdefault('cmap','jet')
+    
+    
+    error_settings.setdefault('mag_err_cols', [
+        f'mag_err_{filters["filt1"].upper()}',
+        f'mag_err_{filters["filt2"].upper()}',
+        f'mag_err_{filters["filt3"].upper()}',])
+    
+    error_settings.setdefault('mag_err_lim',0.2)
+    error_settings.setdefault('ref_xpos',-0.25)
+    
+    kde_contours.setdefault('gen_kde',False)
+    kde_contours.setdefault('gen_contours',False)
+    kde_contours.setdefault('kde_bin',100j)
+    
+    other_settings.setdefault('ab_dist',True)
+    other_settings.setdefault('skip_data',False)
+    other_settings.setdefault('show_err_model',False)
+
+    x_cut_settings.setdefault('cmd_xlo', None)
+    x_cut_settings.setdefault('cmd_xhi', None)
+    x_cut_settings.setdefault('cmd_ylo', None)
+    x_cut_settings.setdefault('cmd_yhi', None)
+    x_cut_settings.setdefault('perp_iso', False)
+    x_cut_settings.setdefault('y_lo', 22)
+    x_cut_settings.setdefault('y_hi', 26.5)
+    x_cut_settings.setdefault('dy', 0.5)
+    x_cut_settings.setdefault('dx', 0.5)
+    x_cut_settings.setdefault('rgb_xlo', 0.5)
+    x_cut_settings.setdefault('rgb_xhi', 2)
+    x_cut_settings.setdefault('rgb_ylo', 23)
+    x_cut_settings.setdefault('rgb_yhi', 26)
+    x_cut_settings.setdefault('fit_isochrone', True)
+    x_cut_settings.setdefault('fit_rgb', False)
+    x_cut_settings.setdefault('x0', 1)
+    x_cut_settings.setdefault('y0', None)
+    x_cut_settings.setdefault('ref_dy', 0.5)
+    x_cut_settings.setdefault('rgb_fit_bin', 100)
+
+    # Filter table by magnitude errors
+    for col in error_settings['mag_err_cols']:
+        tab = tab[tab[col] <= error_settings['mag_err_lim']]
         
-    if mag_err_cols is None:
-        mag_err_cols = [f'mag_err_{filt1.upper()}', f'mag_err_{filt2.upper()}',f'mag_err_{filt3.upper()}']
+    df_iso = df_iso[df_iso['Zini']==isochrone_params['met']]
+    df_iso = df_iso[np.round(df_iso['logAge'],1)==isochrone_params['age']]
+
+
+    if x_cut_settings['cmd_ylo'] is None or x_cut_settings['cmd_yhi'] is None:
+        x_cut_settings['cmd_ylo'] = x_cut_settings['y_lo'] - x_cut_settings['dy']
+        x_cut_settings['cmd_yhi'] = x_cut_settings['y_hi'] + x_cut_settings['dy']
     
+    age = isochrone_params['age'] 
+    if age <6:
+        age_lin  = f'{np.ceil(10**age)} Myr'
+    if age  >= 6  and age < 9:
+        age -=6
+        age_lin = f'{np.ceil(10**age)} Myr'
+    elif age >= 9:
+        age-=9
+        age_lin = f'{np.ceil(10**age)} Gyr'
+
+    if region['spatial_filter']=='circle':
+        tab['r'] = angular_separation(
+        tab[positions['ra_col']] * u.deg,
+        tab[positions['dec_col']] * u.deg,
+        positions['ra_cen'] * u.deg,
+        positions['dec_cen'] * u.deg).to(u.arcsec).value
         
-    if met is not None:
-        cmd = cmd[cmd['Zini']==met]
+        tab = tab[(tab['r'] >= region['r_in'])
+                  & (tab['r'] <= region['r_out'])]
         
-    if cmd_ylo is None or cmd_yhi is None:
-        cmd_ylo = y_lo - dy
-        cmd_yhi = y_hi + dy
+    elif region['spatial_filter']=='box':   
+        tab = box(tab, positions['ra_col'], positions['dec_col'],
+                  positions['ra_cen'], positions['dec_cen'],
+                  region['width_in'] / 3600, region['height_in'] / 3600,
+                  region['width_out'] / 3600, region['height_out'] / 3600,
+                  region['ang'])
+
+    elif region['spatial_filter']=='ellipse':
+        tab = ellipse(tab, positions['ra_col'], positions['dec_col'],
+                  positions['ra_cen'], positions['dec_cen'],
+                  region['ang'], 
+                  region['a1'] / 3600,region['b1'] / 3600,
+                  region['a2'] / 3600,region['b2'] / 3600)
+
+
+    # Extinction corrections
+    AF1 = Av_dict[filters['filt1']] * extinction['Av']
+    AF2 = Av_dict[filters['filt2']] * extinction['Av']
+    AF3 = Av_dict[filters['filt3']] * extinction['Av']
     
-    AF1 =  Av_dict[filt1]*Av
-    AF2 =  Av_dict[filt2]*Av
-    AF3 =  Av_dict[filt3]*Av
-    
-    tab['r'] = angular_separation(tab[ra_col]*u.deg,tab[dec_col]*u.deg,
-                                          ra_cen*u.deg, dec_cen*u.deg).to(u.arcsec).value
-    if r_in is None:
-            r_in = 0
-            r_out = r_out
-            
-    if not sqr_field:
-        tab = tab[ (tab['r']>=r_in) & (tab['r'] <=r_out)]
-    else:
-        tab = box(tab, ra_col, dec_col,  ra_cen, dec_cen,
-                      r_out/3600, r_out/3600, ang)
-    
-    x = tab[f'mag_vega_{filt1.upper()}'] - tab[f'mag_vega_{filt2.upper()}']
-    y = tab[f'mag_vega_{filt3.upper()}'] 
+        # Compute magnitudes and colors
+    x = tab[f'mag_vega_{filters["filt1"].upper()}'] - tab[f'mag_vega_{filters["filt2"].upper()}']
+    y = tab[f'mag_vega_{filters["filt3"].upper()}']
 
     x = x.value.astype(float)
     y = y.value.astype(float)
 
-    if cmd_xlo is None or cmd_xhi is None:
-        cmd_xlo = x.mean() - 0.5
+    if x_cut_settings['cmd_xlo'] is None or x_cut_settings['cmd_xhi'] is None:
+        x_cut_settings['cmd_xlo'] = x.mean() - 0.5
 
-        cmd_xhi = x.mean() + 0.5
+        x_cut_settings['cmd_xhi'] = x.mean() + 0.5
     
     if fig is None or ax is None:
         fig, ax = plt.subplots(figsize=(12,10))
+    # Extinction vector
+    legends = []
+    ax.scatter(x,y, s=plot_settings['s'], color='black')
     
-    theta = np.arctan(AF3/(AF1-AF2)) # Extinction vector
-    
-    ax.scatter(x,y, s=s, color='black')
-    
-    if cmd is not None:
-        cmd = cmd[(cmd['label']>=label_min) & (cmd['label']<=label_max)]
-
-        t = cmd[np.round(cmd['logAge'],1)==age].copy()
-
-        met = np.array(cmd['Zini'])[0]
-        x_i =  (t[f'{filt1.upper()}mag'] + AF1) - (t[f'{filt2.upper()}mag'] + AF2)
-        y_i =  t[f'{filt3.upper()}mag'] + AF3 + dismod
+    if df_iso is not None:
+        df_iso = df_iso[(df_iso['label']>=isochrone_params['label_min']) & 
+                        (df_iso['label']<=isochrone_params['label_max'])]
+        
+        x_i =  (df_iso[f"{filters['filt1'].upper()}mag"] + AF1) - (df_iso[f"{filters['filt2'].upper()}mag"] + AF2)
+        y_i =  df_iso[f"{filters['filt3'].upper()}mag"]
+        
+        # Max mag and Color
+        trgb_mag_iso = y_i.min()
+        trgb_col_iso = x_i[y_i==y_i.min()].values[0]
+        
+        y_i +=  AF3 + distance_modulus
         
         x_i = np.array(x_i)
         y_i = np.array(y_i)
         
         x_iso = x_i.copy()
         y_iso = y_i.copy()
-        
-        x_i = x_i[np.where( (y_i>=cmd_ylo) & (y_i<=cmd_yhi))[0]]
-        y_i = y_i[np.where( (y_i>=cmd_ylo) & (y_i<=cmd_yhi))[0]]
-        
-        ax.plot(x_iso,y_iso, zorder=300,color='green',lw=lw)
 
-        ax.legend(['data', f'age = {age}'], fontsize=20)
+        ind = ((y_i>=x_cut_settings['cmd_ylo']) & 
+              (y_i<=x_cut_settings['cmd_yhi']) &
+              (x_i>=x_cut_settings['cmd_xlo']) & 
+              (x_i<=x_cut_settings['cmd_xhi']))
+        
+        x_i = x_i[ind]  
+        y_i = y_i[ind]
+        
+        ax.plot(x_iso,y_iso, zorder=200, color='green',lw=plot_settings['lw'])
+        
+        legends.append(f'Age = {age_lin}')
 
-    x_l = np.linspace(cmd_xlo, cmd_xhi)    
+    x_l = np.linspace(x_cut_settings['cmd_xlo'], x_cut_settings['cmd_xhi'])    
 
     # Bin mid points
-    y_rgbn = np.arange(y_lo, y_hi, dy)
+    y_rgbn = np.arange(x_cut_settings['y_lo'], 
+                       x_cut_settings['y_hi'], 
+                       x_cut_settings['dy'])
     
-    y_rgb_mid = y_rgbn[:-1] + dy/2   
+    y_rgb_mid = y_rgbn[:-1] + x_cut_settings['dy']/2   
     
-    if fit_isochrone:
+    if  x_cut_settings['fit_isochrone'] and not x_cut_settings['fit_rgb']:
+        print("Fitting Isochrone")
         init = models.Linear1D()
         fit = fitting.LinearLSQFitter()
         model_iso = fit(init, y_i, x_i)
-        
-        ax.plot(model_iso(np.linspace(ylims[0],ylims[1])),
-                          np.linspace(ylims[0],ylims[1]),'--r', lw=lw,
-               zorder=400)
-        if fit_slope:
-            theta = np.arctan(-model_iso.slope.value)
-        
-    else:
-        ind = (x>=rgb_xlo) & (x<=rgb_xhi) & (y>=rgb_ylo) & (y<=rgb_yhi)
+        slope = model_iso.slope.value
 
-        y_n, x_n = running_avg(y[ind], x[ind], 100)
+        y_plot  = np.linspace(axis_limits['ylims'][0],axis_limits['ylims'][1])
+        ax.plot(model_iso(y_plot), y_plot,
+                '--r', lw=plot_settings['lw'],  zorder=400)
+        
+    elif x_cut_settings['fit_rgb']:
+        print("Fitting RGB stars")
+        ind = ((x>=x_cut_settings['rgb_xlo']) & 
+              (x<=x_cut_settings['rgb_xhi']) & 
+              (y>=x_cut_settings['rgb_ylo']) & 
+              (y<=x_cut_settings['rgb_yhi']))
+
+        ind_out = ind
+        y_n, x_n = running_avg(y[ind], x[ind], y_cut_settings['rgb_fit_bin'])
         
         ind = ~np.isnan(x_n)
         x_bin = x_n[ind]
         y_bin = y_n[ind]
         
-        ax.plot(x_bin,y_bin,color='blue',lw=lw)
+        ax.plot(x_bin,y_bin, color='blue', zorder=390)
+        
         init = models.Linear1D()
         fit = fitting.LinearLSQFitter()
         model_iso = fit(init, y_bin, x_bin)
+
+        y_plot  = np.linspace(axis_limits['ylims'][0],axis_limits['ylims'][1])
+        ax.plot(model_iso(y_plot), y_plot,
+                '--r', lw=plot_settings['lw'],  zorder=400)
         
-        ax.plot(model_iso(np.linspace(ylims[0],ylims[1])),
-                          np.linspace(ylims[0],ylims[1]),'--r',lw=lw, 
-               zorder=400)
+        slope = model_iso.slope.value
+
+    else:
+        model_iso = models.Linear1D(slope=0, intercept=x.mean() )
+        
+    theta=np.arctan(AF3/(AF1-AF2)) 
         
     x_rgb_mid = model_iso(y_rgb_mid)
     
-    ax.scatter(x_rgb_mid, y_rgb_mid, c='r' ,zorder = 200,s=s)
+    ax.scatter(x_rgb_mid, y_rgb_mid, c='r' ,zorder = 200,s=plot_settings['s'])
 
     dats = []
     
-    dx0 = dx
-    dx = cmd_xhi- cmd_xlo
+    dx0 = x_cut_settings['dx']
+    dx = x_cut_settings['cmd_xhi']- x_cut_settings['cmd_xlo']
+    dy = x_cut_settings['dy']
     
-    for i,y0 in enumerate(y_rgbn[:-1]):
+    for i, y0 in enumerate(y_rgbn[:-1]):
 
         # Extinction Vector
         x0 = model_iso(y0)
@@ -574,8 +702,8 @@ def gen_CMD_xcut(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1',
         x01 = model_iso(y0 + dy)
         y_Avu = y0 + dy + np.tan(theta)*(x_l-x01)
 
-        ax.plot(x_l,y_Avl, color='grey',lw=lw)
-        ax.plot(x_l,y_Avu, color='grey',lw=lw)
+        ax.plot(x_l,y_Avl, color='grey',lw=plot_settings['lw'])
+        ax.plot(x_l,y_Avu, color='grey',lw=plot_settings['lw'])
 
         init = models.Linear1D()
         fit = fitting.LinearLSQFitter()
@@ -586,46 +714,90 @@ def gen_CMD_xcut(tab, filt1='f115w', filt2='f150w', filt3=None, ra_col = 'ra_1',
         c1 = (y>model_Avl(x)) & (y<=model_Avu(x))
         c2 = (x>=x_rgb_mid[i]-dx/2) & (x<=x_rgb_mid[i]+dx/2) 
 
-        yn = y[np.where(c1&c2)]
-        xn = x[np.where(c1&c2)]
+        yn = y[c1&c2]
+        xn = x[c1&c2]
         
         dat = np.array([xn, yn])
         dats.append(dat)
     
-    ax.set_xlabel(f"{filt1.upper()} - {filt2.upper()}")
-    ax.set_ylabel(filt3.upper())
+    # Extinction Vector
+    AF1_ = Av_dict[filters['filt1']] * extinction['Av_']
+    AF2_ = Av_dict[filters['filt2']] * extinction['Av_']
+    AF3_ = Av_dict[filters['filt3']] * extinction['Av_']
 
-    ax.set_ylim(ylims[0], ylims[1])
-    ax.set_xlim(xlims[0], xlims[1])  
-    ax.invert_yaxis()
-
-    ax.xaxis.set_major_locator(AutoLocator())
-    ax.xaxis.set_minor_locator(AutoMinorLocator())
-
-    ax.yaxis.set_major_locator(AutoLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
-
-    ax.tick_params(which='both', length=15,direction="in", bottom=True, top=True,left=True, right=True, width = 3)
-    ax.tick_params(which='minor', length=8, width = 3)
-    
-    AF1_ =  Av_dict[filt1]*Av_
-    AF2_ =  Av_dict[filt2]*Av_
-    AF3_ =  Av_dict[filt3]*Av_
-    
     dx = AF1_ - AF2_
     dy = AF3_
 
-    ax.annotate('', xy=(Av_x, Av_y),
+    ax.annotate('', xy=(extinction['Av_x'], extinction['Av_y']),
                  xycoords='data',
-                 xytext=(Av_x+dx, Av_y+dy),
+                 xytext=(extinction['Av_x']+dx, 
+                         extinction['Av_y']+dy),
                  textcoords='data',
                  arrowprops=dict(arrowstyle= '<|-',
                                  color='black',
-                                 lw=lw,
+                                 lw=5,
                                  ls='-')
                )
 
-    ax.annotate(f'Av = {Av_}', xy=(Av_x-0.1, Av_y-0.1), fontsize=25)
+    ax.annotate(f"Av = {extinction['Av_']}",
+                xy=(extinction['Av_x']-0.1, extinction['Av_y']-0.1)
+                ,fontsize=plot_settings['Av.fontsize'])
+    
+    # Error models
+    if not other_settings['skip_data']:
+        ref = tab[f"mag_vega_{filters['filt3'].upper()}"]
+        ref_new = np.arange(np.ceil(y.min()),np.floor(y.max())+0.5,0.5)
+
+        mag_err1 = tab[error_settings['mag_err_cols'][0]]
+        mag_err2 = tab[error_settings['mag_err_cols'][1]]
+
+        if len(error_settings['mag_err_cols'])>2:
+            mag_err3 = tab[error_settings['mag_err_cols'][2]]
+        else:
+            mag_err3 = mag_err2
+
+        col_err = np.sqrt(mag_err1**2 + mag_err2**2)
+        init = models.Exponential1D()
+        fit = fitting.LevMarLSQFitter()
+        model_col = fit(init,ref,col_err)
+
+        init = models.Exponential1D()
+        fit = fitting.LevMarLSQFitter()
+        model_mag = fit(init,ref,mag_err3)
+
+        x1 = error_settings['ref_xpos'] + 0*ref_new
+        y1 = ref_new
+        yerr = model_mag(ref_new)
+        xerr = model_col(ref_new)
+        
+        if other_settings['show_err_model']:
+            plt.show()
+            plt.scatter(ref, mag_err3)
+            plt.plot(ref_new,yerr,'--r')
+            plt.show()
+            plt.scatter(ref, col_err)
+            plt.plot(ref_new,xerr,'--r')
+            plt.show()
+        ax.errorbar(x1, y1, yerr, xerr ,fmt='o', color = 'red', markersize=0.5, capsize=2) 
+
+    ax.set_xlim(axis_limits['xlims'][0],axis_limits['xlims'][1])
+    ax.set_ylim(axis_limits['ylims'][0],axis_limits['ylims'][1])
+    
+    ax.tick_params(which='both', length=15,direction="in", 
+                   bottom=True, top=True,left=True, width = 3)
+    
+    ax.tick_params(which='minor', length=8, width = 3)
+    ax.xaxis.set_minor_locator(AutoMinorLocator())
+    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    ax.yaxis.set_major_locator(AutoLocator())
+    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    
+    ax.set_xlabel(f"{filters['filt1'].upper()} - {filters['filt2'].upper()}")
+    ax.set_ylabel(filters['filt3'].upper())
+    ax.invert_yaxis()
+    fig.tight_layout()
+    # Labels, ticks, and legend 
+    ax.legend(legends, fontsize=plot_settings['legend.fontsize'], ncols = plot_settings['legend.ncols'])
     
     return fig, ax, dats, x_rgb_mid, y_rgb_mid, y_rgbn, model_iso
 
