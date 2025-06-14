@@ -659,7 +659,7 @@ def gen_CMD_xcut(tab,
               (y<=x_cut_settings['rgb_yhi']))
 
         ind_out = ind
-        y_n, x_n = running_avg(y[ind], x[ind], y_cut_settings['rgb_fit_bin'])
+        y_n, x_n = running_avg(y[ind], x[ind], x_cut_settings['rgb_fit_bin'])
         
         ind = ~np.isnan(x_n)
         x_bin = x_n[ind]
@@ -689,8 +689,8 @@ def gen_CMD_xcut(tab,
     dats = []
     
     dx0 = x_cut_settings['dx']
-    dx = x_cut_settings['cmd_xhi']- x_cut_settings['cmd_xlo']
-    dy = x_cut_settings['dy']
+    dx  = x_cut_settings['cmd_xhi']- x_cut_settings['cmd_xlo']
+    dy  = x_cut_settings['dy']
     
     for i, y0 in enumerate(y_rgbn[:-1]):
 
