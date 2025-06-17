@@ -973,7 +973,7 @@ def gen_CMD_ycut(tab,
         tick_color='white'
         ax.imshow(f.T, cmap=plot_settings['cmap'], 
                   extent=(*axis_limits['xlims'], *axis_limits['ylims']),
-                  interpolation='nearest', aspect='auto')
+                  interpolation='nearest', aspect='auto', origin='lower')
             
     else:
         ax.scatter(x,y, s=plot_settings['s'], color='black')
