@@ -18,16 +18,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 plt.rcParams['axes.titlesize'] = plt.rcParams['axes.labelsize'] = 35
 plt.rcParams['xtick.labelsize'] = plt.rcParams['ytick.labelsize'] = 35
-
-try:
-  subprocess.run(["latex", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-  usetex = True
-except:
-  print("Latex not installed")
-  usetex = False
   
 plt.rcParams.update({
-    "text.usetex": usetex,
     "font.family": "sans-serif",
     "font.sans-serif": ["Helvetica"]})
 
