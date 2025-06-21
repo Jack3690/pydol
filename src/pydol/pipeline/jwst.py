@@ -77,7 +77,7 @@ class jpipe():
         # Snowball Removal (M82 Group)
         img1.jump.expand_large_events = self.config['corr_snowball']
         # 1/f noise correction
-        img1.clean_flicker_noise.skip = self.config['corr_1byf']       
+        img1.clean_flicker_noise.skip = not self.config['corr_1byf']       
         # Specify where the output should go
         img1.output_dir = self.out_dir + '/stage1/'
         # Save the final resulting _rate.fits files
