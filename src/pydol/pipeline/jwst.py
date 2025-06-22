@@ -34,7 +34,9 @@ class jpipe():
 
         """
         self.config = {'corr_1byf' : False,
-                       'corr_snowball' : True}
+                       'corr_snowball' : True,
+                      'background_method' : 'median',
+                      }
         self.config.update(kwargs)
         self.filter_name=filter
         if n_cores is None or n_cores > mp.cpu_count()-1:
@@ -77,7 +79,10 @@ class jpipe():
         # Snowball Removal (M82 Group)
         img1.jump.expand_large_events = self.config['corr_snowball']
         # 1/f noise correction
-        img1.clean_flicker_noise.skip = not self.config['corr_1byf']       
+        img1.clean_flicker_noise.skip = not self.config['corr_1byf']    
+
+        img1.clean_flicker_noise.background_method = self.config['background_method']    
+        
         # Specify where the output should go
         img1.output_dir = self.out_dir + '/stage1/'
         # Save the final resulting _rate.fits files
