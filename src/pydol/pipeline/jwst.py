@@ -64,6 +64,11 @@ class jpipe():
 
         os.environ["CRDS_CONTEXT"] = crds_context
 
+        # Initiate pipeline instances
+        self.stage1 = Detector1Pipeline()   
+        self.stage2 = Image2Pipeline()
+        self.stage3 = Image3Pipeline()
+
     def stage1_pipeline(self, filename):
         """
             Parameters
@@ -74,23 +79,22 @@ class jpipe():
             -------
                 None
         """
-        # Instantiate the pipeline
-        img1 = Detector1Pipeline()   
+      
         # Snowball Removal (M82 Group)
-        img1.jump.expand_large_events = self.config['corr_snowball']
+        self.stage1.jump.expand_large_events = self.config['corr_snowball']
         # 1/f noise correction
-        img1.clean_flicker_noise.skip = not self.config['corr_1byf']    
+        self.stage1.clean_flicker_noise.skip = not self.config['corr_1byf']    
 
-        img1.clean_flicker_noise.background_method = self.config['background_method']    
+        self.stage1.clean_flicker_noise.background_method = self.config['background_method']    
         
         # Specify where the output should go
-        img1.output_dir = self.out_dir + '/stage1/'
+        self.stage1.output_dir = self.out_dir + '/stage1/'
         # Save the final resulting _rate.fits files
-        img1.save_results = True
+        self.stage1.save_results = True
         #No of cores
-        img1.jump.maximum_cores = f'{self.n_cores}'
+        self.stage1.jump.maximum_cores = f'{self.n_cores}'
         # Run the pipeline on an input list of files
-        img1(filename)
+        self.stage2(filename)
 
     def stage2_pipeline(self, filename):
         """
@@ -102,14 +106,12 @@ class jpipe():
             -------
                 None
         """
-        # Instantiate the pipeline
-        img2 = Image2Pipeline()
         # Specify where the output should go
-        img2.output_dir = self.out_dir + '/stage2/'
+        self.stage2.output_dir = self.out_dir + '/stage2/'
         # Save the final resulting _rate.fits files
-        img2.save_results = True
+        self.stage2.save_results = True
         # Run the pipeline on an input list of files
-        img2(filename)
+        self.stage2(filename)
 
         
     def stage3_pipeline(self, filenames):
@@ -125,16 +127,14 @@ class jpipe():
             -------
                 None
         """
-        # Instantiate the pipeline
-        img3 = Image3Pipeline()
         # Specify where the output should go
-        img3.output_dir = self.out_dir + '/stage3/'
+        self.stage3.output_dir = self.out_dir + '/stage3/'
         # Save the final resulting _rate.fits files
-        img3.save_results = True
+        self.stage3.save_results = True
         # Output file name
-        img3.output_file = self.filter_name
+        self.stage3.output_file = self.filter_name
         # Run the pipeline on an input list of files
-        img3(filenames)
+        self.stage3(filenames)
 
     def __call__(self):
         """
