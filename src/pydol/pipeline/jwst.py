@@ -35,8 +35,10 @@ class jpipe():
         """
         self.config = {'corr_1byf' : False,
                        'corr_snowball' : True,
-                      'background_method' : 'median',
+                       'fit_by_channel' : False,
+                       'background_method' : 'median',
                       }
+                     
         self.config.update(kwargs)
         self.filter_name=filter
         if n_cores is None or n_cores > mp.cpu_count()-1:
@@ -64,11 +66,6 @@ class jpipe():
 
         os.environ["CRDS_CONTEXT"] = crds_context
 
-        # Initiate pipeline instances
-        self.stage1 = Detector1Pipeline()   
-        self.stage2 = Image2Pipeline()
-        self.stage3 = Image3Pipeline()
-
     def stage1_pipeline(self, filename):
         """
             Parameters
@@ -79,11 +76,14 @@ class jpipe():
             -------
                 None
         """
-      
+        self.stage1 = Detector1Pipeline()   
+        
         # Snowball Removal (M82 Group)
         self.stage1.jump.expand_large_events = self.config['corr_snowball']
         # 1/f noise correction
         self.stage1.clean_flicker_noise.skip = not self.config['corr_1byf']    
+       
+        self.stage1.clean_flicker_noise.fit_by_channel = self.config['fit_by_channel']    
 
         self.stage1.clean_flicker_noise.background_method = self.config['background_method']    
         
@@ -106,6 +106,7 @@ class jpipe():
             -------
                 None
         """
+        self.stage2 = Image2Pipeline()
         # Specify where the output should go
         self.stage2.output_dir = self.out_dir + '/stage2/'
         # Save the final resulting _rate.fits files
@@ -127,6 +128,7 @@ class jpipe():
             -------
                 None
         """
+        self.stage3 = Image3Pipeline()
         # Specify where the output should go
         self.stage3.output_dir = self.out_dir + '/stage3/'
         # Save the final resulting _rate.fits files
