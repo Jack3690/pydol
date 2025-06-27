@@ -94,7 +94,7 @@ class jpipe():
         #No of cores
         self.stage1.jump.maximum_cores = f'{self.n_cores}'
         # Run the pipeline on an input list of files
-        self.stage2(filename)
+        self.stage1(filename)
 
     def stage2_pipeline(self, filename):
         """
