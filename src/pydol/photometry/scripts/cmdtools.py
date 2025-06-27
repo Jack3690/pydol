@@ -19,9 +19,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 plt.rcParams['axes.titlesize'] = plt.rcParams['axes.labelsize'] = 35
 plt.rcParams['xtick.labelsize'] = plt.rcParams['ytick.labelsize'] = 35
   
-plt.rcParams.update({
-    "font.family": "sans-serif",
-    "font.sans-serif": ["Helvetica"]})
 
 Av_dict = { # WFC3
             'f275w': 2.02499,
