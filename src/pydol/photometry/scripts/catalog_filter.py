@@ -5,6 +5,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, AltAz, SkyOffsetFrame
 import matplotlib.pyplot as plt
 from astropy.coordinates import Angle
+import shapely
 
 def box(catalog_data,ra_column, dec_column, ra_center, dec_center,
         width_in=24/3600, height_in=24/3600, 
@@ -101,3 +102,12 @@ def ellipse(catalog_data, ra_column, dec_column, ra_center, dec_center, angle=0,
             print(f"Number of objects in the selected region: {len(filtered_catalog)}")
     
     return filtered_catalog
+
+def polygon(catalog_data, ra_column='ra', dec_column='dec', points=None):
+        polygon = shapely.Polygon(points)
+        coords = np.array([catalog_data[ra_column], catalog_data[dec_column]])
+
+        ind = shapely.contains_xy(polygon, coords)
+        filtered_catalog = catalog_data[ind]
+
+        return filtered_catalog
