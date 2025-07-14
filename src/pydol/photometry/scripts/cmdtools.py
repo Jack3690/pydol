@@ -246,8 +246,7 @@ def gen_CMD(
                   region['a1'] / 3600,region['b1'] / 3600,
                   region['a2'] / 3600,region['b2'] / 3600)
     elif region['spatial_filter']=='polygon':
-        tab = polygon(tab, positions['ra_col'], positions['dec_col'],
-                      regions['points'])
+        tab = polygon(tab, positions['ra_col'], positions['dec_col'], region['points'])
 
     # Compute magnitudes and colors
     x = tab[f'mag_vega_{filters["filt1"].upper()}'] - tab[f'mag_vega_{filters["filt2"].upper()}']
