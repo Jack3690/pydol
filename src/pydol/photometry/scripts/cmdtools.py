@@ -6,7 +6,7 @@ import astropy.units as u
 from scipy.stats import gaussian_kde
 from astropy.modeling import models, fitting
 import seaborn as sb
-from .catalog_filter import box, ellipse
+from .catalog_filter import box, ellipse, polygon
 from matplotlib.colors import LinearSegmentedColormap
 import subprocess
 import pandas as pd
@@ -245,6 +245,9 @@ def gen_CMD(
                   region['ang'], 
                   region['a1'] / 3600,region['b1'] / 3600,
                   region['a2'] / 3600,region['b2'] / 3600)
+    elif region['spatial_filter']=='polygon':
+        tab = polygon(tab, positions['ra_col'], positions['dec_col'],
+                      regions['points'])
 
     # Compute magnitudes and colors
     x = tab[f'mag_vega_{filters["filt1"].upper()}'] - tab[f'mag_vega_{filters["filt2"].upper()}']
