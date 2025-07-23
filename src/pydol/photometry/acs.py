@@ -55,34 +55,35 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
 
     out_id = filter + cat_name
 
-    # Generating directories
-    exps = []
-    for i,f in enumerate(flt_files):
-        out_dir = f.split('/')[-1].split('.')[0]
-
-        if not os.path.exists(f'{output_dir}/{out_dir}'):
-            os.mkdir(f'{output_dir}/{out_dir}')
-        if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
-            subprocess.run([f"cp {f} {output_dir}/{out_dir}/data.fits"],
-                                shell=True)
-        exps.append(f'{output_dir}/{out_dir}')
-
-    # Applying NIRCAM Mask
-    print("Running ACSMMASK, CALCSKY AND SPLITGROUPS...")
-    for f in exps:
-        if not os.path.exists(f"{f}/data.chip1.sky.fits") or not os.path.exists(f"{f}/data.chip2.sky.fits") :
-
-            out = subprocess.run([f"acsmask {f}/data.fits"]
-                                    ,shell=True)
-            out = subprocess.run([f"splitgroups {f}/data.fits"]
-                                    ,shell=True)
-
-            out = subprocess.run([f"calcsky {f}/data.chip1 15 35 4 2.25 2.00"]
-                                , shell=True, capture_output=True)
-            
-            out = subprocess.run([f"calcsky {f}/data.chip2 15 35 4 2.25 2.00"]
-                                , shell=True, capture_output=True)
+   
     if edit_params:
+       # Generating directories
+      exps = []
+      for i,f in enumerate(flt_files):
+          out_dir = f.split('/')[-1].split('.')[0]
+  
+          if not os.path.exists(f'{output_dir}/{out_dir}'):
+              os.mkdir(f'{output_dir}/{out_dir}')
+          if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
+              subprocess.run([f"cp {f} {output_dir}/{out_dir}/data.fits"],
+                                  shell=True)
+          exps.append(f'{output_dir}/{out_dir}')
+  
+      # Applying ACS Mask
+      print("Running ACSMMASK, CALCSKY AND SPLITGROUPS...")
+      for f in exps:
+          if not os.path.exists(f"{f}/data.chip1.sky.fits") or not os.path.exists(f"{f}/data.chip2.sky.fits") :
+  
+              out = subprocess.run([f"acsmask {f}/data.fits"]
+                                      ,shell=True)
+              out = subprocess.run([f"splitgroups {f}/data.fits"]
+                                      ,shell=True)
+  
+              out = subprocess.run([f"calcsky {f}/data.chip1 15 35 4 2.25 2.00"]
+                                  , shell=True, capture_output=True)
+              
+              out = subprocess.run([f"calcsky {f}/data.chip2 15 35 4 2.25 2.00"]
+                                  , shell=True, capture_output=True)
       # Preparing Parameter file DOLPHOT NIRCAM
       with open(param_file) as f:
                   dat = f.readlines()
