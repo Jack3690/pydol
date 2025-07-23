@@ -55,29 +55,29 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
 
     out_id = filter + cat_name
 
-    # Generating directories
-    exps = []
-    for i,f in enumerate(input_files):
-        out_dir = f.split('/')[-1].split('.')[0]
-
-        if not os.path.exists(f'{output_dir}/{out_dir}'):
-            os.mkdir(f'{output_dir}/{out_dir}')
-        if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
-            subprocess.run([f"cp {f} {output_dir}/{out_dir}/data.fits"],
-                                shell=True)
-
-        exps.append(f'{output_dir}/{out_dir}')
-
-    # Applying NIRCAM Mask
-    print("Running NIRCAMMASK and CALCSKY...")
-    for f in exps:
-        if not os.path.exists(f"{f}/data.sky.fits"):
-            out = subprocess.run([f"nircammask {f}/data.fits"]
-                                    ,shell=True)
-
-            out = subprocess.run([f"calcsky {f}/data 10 25 2 2.25 2.00"]
-                                , shell=True, capture_output=True)
     if edit_params:
+      # Generating directories
+      exps = []
+      for i,f in enumerate(input_files):
+          out_dir = f.split('/')[-1].split('.')[0]
+  
+          if not os.path.exists(f'{output_dir}/{out_dir}'):
+              os.mkdir(f'{output_dir}/{out_dir}')
+          if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
+              subprocess.run([f"cp {f} {output_dir}/{out_dir}/data.fits"],
+                                  shell=True)
+  
+          exps.append(f'{output_dir}/{out_dir}')
+  
+      # Applying NIRCAM Mask
+      print("Running NIRCAMMASK and CALCSKY...")
+      for f in exps:
+          if not os.path.exists(f"{f}/data.sky.fits"):
+              out = subprocess.run([f"nircammask {f}/data.fits"]
+                                      ,shell=True)
+  
+              out = subprocess.run([f"calcsky {f}/data 10 25 2 2.25 2.00"]
+                                  , shell=True, capture_output=True)
       # Preparing Parameter file DOLPHOT NIRCAM
       with open(param_file) as f:
                   dat = f.readlines()
