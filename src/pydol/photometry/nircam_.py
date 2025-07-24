@@ -16,6 +16,29 @@ from .scripts.catalog_filter import box
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
+sw_params = {'RAper': '2',
+             'Rchi' : '1.5',
+             'RSky0': '15',
+             'RSky1': '35',
+             'RSky2': '3 10',
+             'RPSF' : '15',
+             'apsky': '20 35',
+             'aprad': '10',
+             'RPSF ': '15'
+             }
+
+lw_params = {'RAper': '3',
+             'Rchi' : '2',
+             'RSky0': '15',
+             'RSky1': '35',
+             'RSky2': '4 10',
+             'RPSF' : '15',
+             'apsky': '20 35',
+             'aprad': '10',
+             'RPSF' : '15'
+             }
+
+
 def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
                 cat_name='', param_file=None,sharp_cut=0.01,
                 crowd_cut=0.5, SNR_min=5, type=2):
@@ -49,7 +72,7 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
     if param_file is None or not os.path.exists(param_file) :
       print("Using Default params")
       edit_params = True
-      param_file = param_dir_default + '/nircam_sw_dolphot.param'
+      param_file = param_dir_default + '/nircam_dolphot.param'
     else:
       edit_params = False
 
@@ -71,13 +94,23 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
   
       # Applying NIRCAM Mask
       print("Running NIRCAMMASK and CALCSKY...")
+      filter_wavelengths = []
       for f in exps:
           if not os.path.exists(f"{f}/data.sky.fits"):
+              hdul = fits.open(f"{f}/data.fits")
+              filter_wavelgtength = float(hdul[0].header['FILTER'][1:-1])
+              filter_wavelengths.append(filter_wavelgtength)
+              hdul.close()
+
               out = subprocess.run([f"nircammask {f}/data.fits"]
                                       ,shell=True)
-  
-              out = subprocess.run([f"calcsky {f}/data 10 25 2 2.25 2.00"]
+              if filter_wavelgtength <= 200:
+                out = subprocess.run([f"calcsky {f}/data 10 25 2 2.25 2.00"]
                                   , shell=True, capture_output=True)
+              else:
+                # For Long Wavelength Filters (TBD)
+                out = subprocess.run([f"calcsky {f}/data 10 25 2 2.25 2.00"]
+                                , shell=True, capture_output=True)
       # Preparing Parameter file DOLPHOT NIRCAM
       with open(param_file) as f:
                   dat = f.readlines()
@@ -88,6 +121,12 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
 
       for i,f in enumerate(exps):
           dat[5] += f'img{i+1}_file = {f}/data           #image {i+1}\n'
+          if filter_wavelengths[i] <= 200:
+              for key in sw_params.keys():
+                  dat[5] += f'img{i+1}_{key} = {sw_params[key]} \n'
+          else:
+              for key in lw_params.keys():
+                  dat[5] += f'img{i+1}_{key} = {lw_params[key]} \n'
 
       with open(f"{output_dir}/nircam_dolphot_{out_id}.param", 'w', encoding='utf-8') as f:
           f.writelines(dat)
