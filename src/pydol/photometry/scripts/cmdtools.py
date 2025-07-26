@@ -214,6 +214,7 @@ def gen_CMD(
     kde_contours.setdefault('gen_contours',False)
     kde_contours.setdefault('kde_bin',100j)
     kde_contours.setdefault('cmap','jet')
+    kde_contours.setdefault('bw', 0.05)
     
     other_settings.setdefault('ab_dist',True)
     other_settings.setdefault('skip_data',False)
@@ -276,7 +277,7 @@ def gen_CMD(
         positions = np.vstack([xx.ravel(), yy.ravel()])
         values = np.vstack([x, y])
 
-        kernel = gaussian_kde(values, bw_method=0.05)
+        kernel = gaussian_kde(values, bw_method=kde_contours['bw'])
         f = np.reshape(kernel(positions), xx.shape)
         tick_color='white'
         ax.imshow(f.T, cmap=kde_contours['cmap'], extent=(*axis_limits['xlims'], *axis_limits['ylims']),
