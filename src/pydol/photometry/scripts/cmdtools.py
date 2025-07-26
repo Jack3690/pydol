@@ -212,6 +212,8 @@ def gen_CMD(
     
     kde_contours.setdefault('gen_kde',False)
     kde_contours.setdefault('gen_contours',False)
+    kde_contours.setdefault('kde_bin',100j)
+    kde_contours.setdefault('cmap','jet')
     
     other_settings.setdefault('ab_dist',True)
     other_settings.setdefault('skip_data',False)
@@ -268,8 +270,8 @@ def gen_CMD(
     tick_color = 'black'
     if kde_contours['gen_kde'] and not kde_contours['gen_contours']:
         xx, yy = np.mgrid[
-            axis_limits['xlims'][0]:axis_limits['xlims'][1]:100j,
-            axis_limits['ylims'][0]:axis_limits['ylims'][1]:100j]
+            axis_limits['xlims'][0]:axis_limits['xlims'][1]:kde_contours['kde_bin'],
+            axis_limits['ylims'][0]:axis_limits['ylims'][1]:kde_contours['kde_bin']]
         
         positions = np.vstack([xx.ravel(), yy.ravel()])
         values = np.vstack([x, y])
@@ -277,7 +279,7 @@ def gen_CMD(
         kernel = gaussian_kde(values, bw_method=0.05)
         f = np.reshape(kernel(positions), xx.shape)
         tick_color='white'
-        ax.imshow(f.T, cmap='jet', extent=(*axis_limits['xlims'], *axis_limits['ylims']),
+        ax.imshow(f.T, cmap=kde_contours['cmap'], extent=(*axis_limits['xlims'], *axis_limits['ylims']),
                   interpolation='nearest', aspect='auto')
 
     elif kde_contours['gen_contours']:
