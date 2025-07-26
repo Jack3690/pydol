@@ -31,6 +31,8 @@ src/pydol/bayestar/data/test_files/Isochrone.test/21_PARSEC1.1_Z0.015_logAGE8.0M
 src/pydol/photometry/__init__.py
 src/pydol/photometry/acs.py
 src/pydol/photometry/nircam.py
+src/pydol/photometry/nircam_.py
+src/pydol/photometry/wfc3.py
 src/pydol/photometry/__pycache__/__init__.cpython-310.pyc
 src/pydol/photometry/__pycache__/__init__.cpython-311.pyc
 src/pydol/photometry/__pycache__/acs.cpython-310.pyc
@@ -40,11 +42,14 @@ src/pydol/photometry/__pycache__/nircam.cpython-311.pyc
 src/pydol/photometry/__pycache__/wfc3.cpython-310.pyc
 src/pydol/photometry/params/acs_dolphot.param
 src/pydol/photometry/params/nircam_dolphot.param
-src/pydol/photometry/params/uvis_dolphot.param
+src/pydol/photometry/params/nircam_sw_dolphot.param
+src/pydol/photometry/params/wfc3_ir_dolphot.param
+src/pydol/photometry/params/wfc3_uvis_dolphot.param
 src/pydol/photometry/scripts/__init__.py
 src/pydol/photometry/scripts/catalog_filter.py
 src/pydol/photometry/scripts/cmdtools.py
 src/pydol/photometry/scripts/gloess.py
+src/pydol/photometry/scripts/sim_cmd.py
 src/pydol/photometry/scripts/to_table.py
 src/pydol/photometry/scripts/to_table_fake.py
 src/pydol/photometry/scripts/__pycache__/__init__.cpython-310.pyc
@@ -71,4 +76,5 @@ src/pydol/pydol.egg-info/dependency_links.txt
 src/pydol/pydol.egg-info/requires.txt
 src/pydol/pydol.egg-info/top_level.txt
 tests/test.py
+tests/test_imports.py
 tests/test_pipeline.py
