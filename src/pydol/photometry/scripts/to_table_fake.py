@@ -20,7 +20,10 @@ if __name__ == "__main__":
 			if 'Measured' in i:
 				n_filt = (n - 12)//13
 				break
-	
+	n_image = 0
+	for i in cols:
+	    if 'Measured counts' in i:
+	        n_image+=1
 	filts = [cols[12+ i*13].split(f'{options.detector.upper()}_')[-1][:-1] for i in range(n_filt)]
 	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type', 'pass_det']
 	col_filt = ['counts_tot','sky_tot','count_rate','count_rate_err','mag_vega','mag_ubvri','mag_err','chi','SNR','sharpness','roundness','crowd','flags']
@@ -40,7 +43,7 @@ if __name__ == "__main__":
 	with open(options.filename) as f:
 		dat = f.readlines()
 
-	start = 4 + len(filts)*16
+	start = 4 + 2*n_image
 	end = start + len(cols_out)
 	
 	dat = np.array([i.split()[:end] for i in dat]).astype(float)
@@ -55,3 +58,4 @@ if __name__ == "__main__":
 	elif options.format == 'fits':
 		tab = Table.from_pandas(df)
 		tab.write(f'{filename}/{out}.fits', overwrite=True)
+
