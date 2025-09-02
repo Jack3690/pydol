@@ -524,6 +524,7 @@ def gen_CMD_xcut(tab,
     x_cut_settings.setdefault('y0', None)
     x_cut_settings.setdefault('ref_dy', 0.5)
     x_cut_settings.setdefault('rgb_fit_bin', 100)
+    x_cut_settings.setdefault('theta', None)
 
     # Filter table by magnitude errors
     for col in error_settings['mag_err_cols']:
@@ -674,8 +675,9 @@ def gen_CMD_xcut(tab,
 
     else:
         model_iso = models.Linear1D(slope=0, intercept=x.mean() )
-        
-    theta=np.arctan(AF3/(AF1-AF2)) 
+
+    if x_cut_settings['theta'] is None:
+      theta=np.arctan(AF3/(AF1-AF2)) 
         
     x_rgb_mid = model_iso(y_rgb_mid)
     
