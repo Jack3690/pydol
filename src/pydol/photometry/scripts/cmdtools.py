@@ -527,6 +527,7 @@ def gen_CMD_xcut(tab,
     x_cut_settings.setdefault('theta', None)
     x_cut_settings.setdefault('slope', None)
     x_cut_settings.setdefault('intercept', None)
+    x_cut_settings.setdefault('color', 'grey')
 
     # Filter table by magnitude errors
     for col in error_settings['mag_err_cols']:
@@ -704,8 +705,8 @@ def gen_CMD_xcut(tab,
         x01 = model_iso(y0 + dy)
         y_Avu = y0 + dy + np.tan(theta)*(x_l-x01)
 
-        ax.plot(x_l,y_Avl, color='grey',lw=plot_settings['lw'])
-        ax.plot(x_l,y_Avu, color='grey',lw=plot_settings['lw'])
+        ax.plot(x_l,y_Avl, color=x_cut_settings['color'],lw=plot_settings['lw'])
+        ax.plot(x_l,y_Avu, color=x_cut_settings['color'],lw=plot_settings['lw'])
 
         init = models.Linear1D()
         fit = fitting.LinearLSQFitter()
