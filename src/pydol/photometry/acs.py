@@ -247,7 +247,9 @@ def acs_phot_comp(param_file=None, m=[20], filter='f814w', region_name = '3',
           print(line)
     # Generating Astropy FITS Table
 
-        cmd = f"python {script_dir}/to_table_fake.py --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
+        cmd =  f"python {script_dir}/to_table_fake.py" 
+        cmd += f" --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
+        cmd += f" --d ACS"
         cmd += f" --c {output_dir}/out.columns"
         cmd += f" --o fake_out_{region_name}_{m}_{out_id}"
         out = subprocess.run([cmd], shell=True)
