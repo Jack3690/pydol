@@ -15,9 +15,9 @@ package_path = os.path.abspath('../../src')
 
 os.environ['PYTHONPATH'] = ':'.join((package_path, os.environ.get('PYTHONPATH', '')))
 project = 'pydol'
-copyright = '2024, Avinash CK'
+copyright = '2025, Avinash CK'
 author = 'Avinash CK'
-release = '0.0.1'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -40,3 +40,4 @@ exclude_patterns = []
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
