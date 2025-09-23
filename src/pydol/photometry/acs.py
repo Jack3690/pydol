@@ -85,6 +85,11 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
               out = subprocess.run([f"calcsky {f}/data.chip2 15 35 4 2.25 2.00"]
                                   , shell=True, capture_output=True)
       # Preparing Parameter file DOLPHOT NIRCAM
+      """
+      Module for HST ACS photometry and completeness analysis using DOLPHOT.
+
+      Provides functions to run photometry, filter catalogs, and generate completeness tests for ACS data.
+      """
       with open(param_file) as f:
                   dat = f.readlines()
 
@@ -103,13 +108,40 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
         # Running DOLPHOT ACS
         p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file}"]
                             , stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                             text=True)
-        while (line := p.stdout.readline()) != "":
+                            text=True)
+    """
+    Run DOLPHOT photometry for HST ACS images and filter the resulting catalog.
+
+    Parameters
+    ----------
+    flt_files : list of str
+      Paths to HST ACS level 3 _flt.fits files.
+    filter : str, optional
+      Name of the ACS filter being processed (default: 'f435w').
+    output_dir : str, optional
+      Path to output directory (default: '.').
+    drz_path : str, optional
+      Path to level 3 drizzled image (_drz.fits) (default: '.').
+    cat_name : str, optional
+      Output photometry catalogs will have prefix filter + cat_name (default: '').
+    param_file : str, optional
+      Path to DOLPHOT parameter file. If None, uses default params.
+    sharp_cut : float, optional
+      Maximum allowed squared sharpness for filtering (default: 0.2).
+    crowd_cut : float, optional
+      Maximum allowed crowding value for filtering (default: 2.25).
+
+    Returns
+    -------
+    None
+      Writes filtered and unfiltered photometry tables to FITS files in output_dir.
+    """
+    while (line := p.stdout.readline()) != "":
           print(line)
     # Generating Astropy FITS Table
 
-        out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out --d ACS"],
-                       shell=True)
+    out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out --d ACS"],
+                    shell=True)
       
     phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
 
@@ -128,6 +160,53 @@ def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
     phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
                                 (phot_table['obj_crowd']<= crowd_cut) &
                                 (phot_table['type'] <= 2)]
+    """
+    Generate completeness tests for HST ACS photometry using fake star injection.
+
+    Parameters
+    ----------
+    param_file : str
+      Path to DOLPHOT parameter file (must exist).
+    m : list of float, optional
+      Magnitudes for fake stars (default: [20]).
+    filter : str, optional
+      Name of the ACS filter being processed (default: 'f814w').
+    region_name : str, optional
+      Name/ID for the region (default: '3').
+    output_dir : str, optional
+      Path to output directory (default: '.').
+    tab_path : str, optional
+      Path to photometry table (default: '.').
+    ref_img_path : str, optional
+      Path to reference image for WCS assignment (default: None).
+    cat_name : str, optional
+      Output photometry catalogs will have prefix filter + cat_name (default: '').
+    sharp_cut : float, optional
+      Maximum allowed squared sharpness for filtering (default: 0.2).
+    crowd_cut : float, optional
+      Maximum allowed crowding value for filtering (default: 2.25).
+    SNR_min : float, optional
+      Minimum allowed SNR for filtering (default: 5).
+    type : int, optional
+      Maximum allowed type value for filtering (default: 2).
+    ra_col, dec_col : str, optional
+      Column names for RA and Dec (default: 'ra', 'dec').
+    ra, dec : float, optional
+      Center coordinates for region selection (default: 0).
+    shape : str, optional
+      Region shape ('box' or 'circle', default: 'box').
+    width, height : float, optional
+      Region width/height in degrees (default: 24/3600).
+    ang : float, optional
+      Region angle in degrees (default: 245).
+    nx, ny : int, optional
+      Number of grid points in x/y (default: 10).
+
+    Returns
+    -------
+    None
+      Writes fake star catalogs and filtered completeness tables to output_dir.
+    """
     flag_keys = []
     for key in phot_table1.keys():
         if 'flag' in key:

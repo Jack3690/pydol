@@ -1,5 +1,0 @@
-from pydol.photometry.scripts.cmdtoold import gen_CMD
-import pytest
-
-def test_gen_CMD():
-    pass  # Replace with actual test implementation
