@@ -3,7 +3,7 @@ Installation
 ====================
 
 
-** DOLPHOT 2.0 **
+**DOLPHOT 2.0**
 
 You can download DOLPHOT 2.0 source code and JWST/NIRCAM, HST/ACS, and HST/WFC3 modules from http://americano.dolphinsim.com/dolphot/nircam.html
 
@@ -19,6 +19,7 @@ Next, you can download and extract the necessary filters you would use for photo
 For HST modules, you also need to download the pixel area maps.
 
 Finally, add 'dolphot2.0/bin' to PATH. Note that this PATH variable should be accessible by your Python environment.
+
 
 
 
