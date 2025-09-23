@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 setup(
         name='pydol',
-        version='0.0.3',
-        description="Python wrapper for DOLPHOT: Photometry tool",
+        version='1.0.0',
+        description="Python wrapper for DOLPHOT",
         url='https://github.com/Jack3690/pydol',
         author='Avinash CK',
         author_email='avinash@inaoep.mx',
-        license='BSD 2-clause',
+        license='BSD 3-clause',
         package_dir={'': 'src'},
         packages=find_packages(where='src'),
         include_package_data=True,
@@ -17,8 +17,7 @@ setup(
             'Development Status :: 1 - Planning',
             'Intended Audience :: Science/Research',
             'License :: OSI Approved :: BSD License',
-            'Operating System :: OS Independent',
-            'Programming Language :: Python :: 3.6',
-            'Programming Language :: Python :: 3.9',
+            'Operating System :: POSIX :: Linux',
+            'Programming Language :: Python :: 3.11',
         ],
 )
