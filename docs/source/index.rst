@@ -6,7 +6,7 @@
 Welcome to pydol's documentation!
 #################################
 
-PyDOL is a Python interface for resolved stellar photometric studies using HST and JWST. PyDOL contains HST and JWST pipelines for re-processing data using the latest calibration files from CRDS. A Python wrapper for DOLPHOT is included for crowd-field PSF Photometry and completeness analysis for HST-ACS, HST-WFC3, and JWST-NIRCAM data.
+PyDOL is a Python wrapper for the DOLPHOT crowd-field PSF photometry tool. PyDOL aims to automate the DOLPHOT PSF photometry and completeness analysis routines for HST/ACS, HST/WFC3, and JWST/NIRCam data for resolved stellar photometric studies. Additionally, PyDOL contains HST and JWST pipelines for re-processing data using the latest calibration files from CRDS.
 
 .. toctree::
    :maxdepth: 2

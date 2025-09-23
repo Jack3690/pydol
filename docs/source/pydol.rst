@@ -2,9 +2,11 @@ Pydol Modules
 =============
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 5
+
+   pydol.photometry
 
    pydol.pipeline
-   pydol.photometry
+   
    
 
