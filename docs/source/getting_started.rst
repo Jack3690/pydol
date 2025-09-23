@@ -17,7 +17,9 @@ In short, PyDOL is a simple Python wrapper for DOLPHOT which does the following 
 Before running PyDOL, you need to have DOLPHOT installed. See `Installation <https://pydol.readthedocs.io/en/latest/installation.html>`_ for detailed instructions.
 
 **2. Create a conda environment**
+
 .. code-block:: bash
+
     $ conda create --name dolphot python=3.11
 
 **3. Install PyDOL from GitHub**
