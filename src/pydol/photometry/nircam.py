@@ -120,7 +120,7 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
 
             out = subprocess.run([f"nircammask {f}/data.fits"]
                                     ,shell=True)
-            if filter_wavelgtength <= 200:
+            if filter_wavelength <= 200:
               out = subprocess.run([f"calcsky {f}/data 10 25 2 2.25 2.00"]
                                 , shell=True, capture_output=True)
             else:
