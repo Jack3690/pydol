@@ -94,7 +94,7 @@ class jpipe():
         #No of cores
         self.stage1.jump.maximum_cores = f'{self.n_cores}'
         # Run the pipeline on an input list of files
-        self.stage1(filename)
+        self.stage1.call(filename)
 
     def stage2_pipeline(self, filename):
         """
@@ -112,7 +112,7 @@ class jpipe():
         # Save the final resulting _rate.fits files
         self.stage2.save_results = True
         # Run the pipeline on an input list of files
-        self.stage2(filename)
+        self.stage2.call(filename)
 
         
     def stage3_pipeline(self, filenames):
@@ -136,7 +136,7 @@ class jpipe():
         # Output file name
         self.stage3.output_file = self.filter_name
         # Run the pipeline on an input list of files
-        self.stage3(filenames)
+        self.stage3.call(filenames)
 
     def __call__(self):
         """
@@ -165,3 +165,4 @@ class jpipe():
 
         if len(cal_files_) > 0:
             self.stage3_pipeline(cal_files)
+
