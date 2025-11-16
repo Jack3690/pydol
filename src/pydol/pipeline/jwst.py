@@ -56,44 +56,39 @@ class jpipe():
 
     def stage1_pipeline(self, filename):
 
-        self.stage1 = Detector1Pipeline()
-
-        # Snowball removal
-        self.stage1.jump.expand_large_events = self.config['corr_snowball']
-
-        # 1/f noise
-        self.stage1.clean_flicker_noise.skip = not self.config['corr_1byf']
-        self.stage1.clean_flicker_noise.fit_by_channel = self.config['fit_by_channel']
-        self.stage1.clean_flicker_noise.background_method = self.config['background_method']
-
-        # Output
-        self.stage1.output_dir = self.out_dir + '/stage1/'
-        self.stage1.save_results = True
-
-        # Parallel cores
-        self.stage1.jump.maximum_cores = f'{self.n_cores}'
-
-        self.stage1.call(filename, save_results=True)
+        steps_stage1 = {
+            "jump": {
+                "expand_large_events": self.config["corr_snowball"],
+                "maximum_cores": f"{self.n_cores}",
+            },
+            "clean_flicker_noise": {
+                "skip": not self.config["corr_1byf"],
+                "fit_by_channel": self.config["fit_by_channel"],
+                "background_method": self.config["background_method"],
+            },
+        }
+    
+        Detector1Pipeline.call(
+            filename,
+            output_dir=self.out_dir + "/stage1/",
+            save_results=True,
+            steps=steps_stage1,
+        )
 
     # ---------------- STAGE 2 ---------------- #
 
     def stage2_pipeline(self, filename):
 
         self.stage2 = Image2Pipeline()
-        self.stage2.output_dir = self.out_dir + '/stage2/'
-        self.stage2.save_results = True
-        self.stage2.call(filename, save_results=True)
+        self.stage2.call(filename, save_results=True, output_dir = self.out_dir + '/stage2/' )
 
     # ---------------- STAGE 3 ---------------- #
 
     def stage3_pipeline(self, filenames):
 
         self.stage3 = Image3Pipeline()
-        self.stage3.output_dir = self.out_dir + '/stage3/'
-        self.stage3.save_results = True
-        self.stage3.output_file = self.filter_name
-
-        self.stage3.call(filenames, save_results=True)
+        self.stage3.call(filenames, save_results=True, output_file = self.filter_name,
+                         output_dir = self.out_dir + '/stage3/')
 
     # ---------------- MASTER CALL ---------------- #
 
@@ -132,3 +127,4 @@ class jpipe():
 
         if len(cal_files_to_run) > 0:
             self.stage3_pipeline(cal_files)
+
