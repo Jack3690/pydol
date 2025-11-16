@@ -120,13 +120,8 @@ class jpipe():
         cal_files = [f.replace('stage1', 'stage2').replace('rate', 'cal')
                      for f in rate_files]
 
-        # JWST 1.20.2: Stage 3 imaging output = *_i2d.fits
-        cal_files_to_run = [
-            f for f in cal_files
-            if not os.path.exists(f.replace('stage2', 'stage3').replace('cal', 'i2d'))
-        ]
-
-        if len(cal_files_to_run) > 0:
+        if len(cal_files) > 0:
             self.stage3_pipeline(cal_files)
+
 
 
