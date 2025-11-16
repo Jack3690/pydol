@@ -5,7 +5,8 @@ from glob import glob
 import os
 import multiprocessing as mp
 from pathlib import Path
-
+from crds import client
+client.set_crds_server("https://jwst-crds.stsci.edu")
 
 class jpipe():
     def __init__(self, input_files=[], out_dir='.', filter='',
@@ -127,4 +128,5 @@ class jpipe():
 
         if len(cal_files_to_run) > 0:
             self.stage3_pipeline(cal_files)
+
 
