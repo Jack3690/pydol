@@ -78,10 +78,11 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
   None
     Writes filtered and unfiltered photometry tables to FITS files in output_dir.
   """
-  if len(input_files)<1:
+  if len(input_files) < 1:
       raise Exception("input_files cannot be EMPTY")
-  elif np.all([if '.fits' in i or '.FITS' in i for i in i input_files]):
-      print(f"No of input images: {len(input_files)")
+  
+  elif np.all([('.fits' in i.lower()) for i in input_files]):
+      print(f"No of input files: {len(input_files)}")
   else:
       raise Exception("Input file list contains data format other than FITS!!!")
     
