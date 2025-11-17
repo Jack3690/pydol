@@ -80,7 +80,11 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
   """
   if len(input_files)<1:
       raise Exception("input_files cannot be EMPTY")
-
+  elif np.all([if '.fits' in i or '.FITS' in i for i in i input_files]:
+      print(f"No of input images: {len(input_files)")
+  else:
+      raise Exception("Input file list contains data format other than FITS!!!")
+    
   subprocess.run([f"nircammask {ref_img_path}.fits"], shell=True)
   if not os.path.exists(output_dir):
       os.mkdir(output_dir)
