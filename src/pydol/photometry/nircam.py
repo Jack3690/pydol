@@ -117,12 +117,11 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
     print("Running NIRCAMMASK and CALCSKY...")
     filter_wavelengths = []
     for f in exps:
-        if not os.path.exists(f"{f}/data.sky.fits"):
-            hdul = fits.open(f"{f}/data.fits")
-            filter_wavelength = float(hdul[0].header['FILTER'][1:-1])
-            filter_wavelengths.append(filter_wavelength)
-            hdul.close()
-
+         hdul = fits.open(f"{f}/data.fits")
+         filter_wavelength = float(hdul[0].header['FILTER'][1:-1])
+         filter_wavelengths.append(filter_wavelength)
+         hdul.close()
+         if not os.path.exists(f"{f}/data.sky.fits"):
             out = subprocess.run([f"nircammask {f}/data.fits"]
                                     ,shell=True)
             if filter_wavelength <= 200:
