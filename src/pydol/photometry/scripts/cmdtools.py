@@ -681,7 +681,7 @@ def gen_CMD_xcut(tab,
                                     intercept=x_cut_settings['intercept'])
 
     if x_cut_settings['theta'] is None:
-      theta=np.arctan(AF3/(AF1-AF2)) 
+      theta=np.arctan(Av_dict[filters['filt3']]/( Av_dict[filters['filt1']]- Av_dict[filters['filt2']])) 
     else:
       theta = x_cut_settings['theta']
         
