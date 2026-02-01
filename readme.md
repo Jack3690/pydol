@@ -6,6 +6,11 @@ PyDOL is a Python wrapper for the DOLPHOT crowd-field PSF photometry tool. PyDOL
 ```
 pip install git+https://github.com/Jack3690/pydol/
 ```
+
+```
+pip install  "pydol[hst] @ git+https://github.com/Jack3690/pydol"
+```
+
 ## Pre-requisites
 1. DOLPHOT 
    
@@ -13,6 +18,7 @@ pip install git+https://github.com/Jack3690/pydol/
 
 * Example                      : [Example.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/Example.ipynb)
 * pydol                        : [pydol.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/pydol.ipynb)
+
 
 
 
