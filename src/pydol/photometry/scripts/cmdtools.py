@@ -192,6 +192,7 @@ def gen_CMD(
     isochrone_params.setdefault('label_max', 10)
     isochrone_params.setdefault('met', [0.02])
     isochrone_params.setdefault('age', [7,8,9])
+    isochrone_params.setdefault('iso_mask_lim',1)
     
     plot_settings.setdefault('Av.fontsize',15)
     plot_settings.setdefault('legend.fontsize',15)
@@ -200,7 +201,7 @@ def gen_CMD(
     plot_settings.setdefault('alpha',1)
     plot_settings.setdefault('print_met',False)
     plot_settings.setdefault('legend.ncols',1)
-    
+
     
     error_settings.setdefault('mag_err_cols', [
         f'mag_err_{filters["filt1"].upper()}',
@@ -333,7 +334,7 @@ def gen_CMD(
                         subset[f"{filters['filt2'].upper()}mag"] + AF2)
                 y_iso = subset[f"{filters['filt3'].upper()}mag"] + AF3 + distance_modulus
                        
-                mask = (y_iso.values[1:]- y_iso.values[:-1])<1
+                mask = (y_iso.values[1:]- y_iso.values[:-1])<isochrone_params['iso_mask_lim']
                 mask = np.array([True] + list(mask))
                 mask = np.where(~mask, np.nan, 1)
                 
