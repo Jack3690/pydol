@@ -177,22 +177,12 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
   phot_table['dec'] = coords[:,1]
 
   # Filtering stellar photometry catalog using Warfield et.al (2023) (Default)
-  phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                  (phot_table['obj_crowd']<= crowd_cut) &
-                                  (phot_table['type'] <= type)]
-  flag_keys = []
-  for key in phot_table1.keys():
-      if 'flag' in key:
-          flag_keys.append(key)
-  for i in flag_keys:
-      phot_table1  = phot_table1[phot_table1[i]<=type]
-
-  SNR_keys = []
-  for key in phot_table1.keys():
-      if 'SNR' in key:
-          SNR_keys.append(key)
-  for i in SNR_keys:
-      phot_table1  = phot_table1[phot_table1[i]>=SNR_min]
+  for filt in filter.split('_'):
+    filt = filt.upper()
+    phot_table1 = phot_table[ (phot_table[f'sharpness_{filt}']**2<= sharp_cut) &
+                                    (phot_table[f'crowd_{filt}']<= crowd_cut) &
+                                    (phot_table[f'flags_{filt}']<=type) &
+                                    (phot_table[f'SNR_{filt}']>=SNR_min) ]
 
   phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
   phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
@@ -348,22 +338,13 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
         phot_table['dec'] = coords[:,1]
 
       # Filtering stellar photometry catalog using Warfield et.al (2023)
-      phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                  (phot_table['obj_crowd']<= crowd_cut) &
-                                  (phot_table['type'] <= type)]
-      flag_keys = []
-      for key in phot_table1.keys():
-          if 'flag' in key:
-              flag_keys.append(key)
-      for i in flag_keys:
-          phot_table1  = phot_table1[phot_table1[i]<=type]
-
-      SNR_keys = []
-      for key in phot_table1.keys():
-          if 'SNR' in key:
-              SNR_keys.append(key)
-      for i in SNR_keys:
-          phot_table1  = phot_table1[phot_table1[i]>=SNR_min]
+      for filt in filter.split('_'):
+        filt = filt.upper()
+        phot_table1 = phot_table[ (phot_table[f'sharpness_{filt}']**2<= sharp_cut) &
+                                        (phot_table[f'crowd_{filt}']<= crowd_cut) &
+                                        (phot_table[f'flags_{filt}']<=type) &
+                                        (phot_table[f'SNR_{filt}']>=SNR_min) ]
+          
       phot_table.write(f"{output_dir}/fake_out_{region_name}_{m}_{out_id}.fits", overwrite=True)
       phot_table1.write(f'{output_dir}/fake_out_{region_name}_{m}_{out_id}_filt.fits', overwrite=True)
       print('NIRCAM Completeness Completed!')
