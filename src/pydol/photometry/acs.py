@@ -390,9 +390,9 @@ def acs_phot_comp(
     # Add RA/Dec if requested
     # -------------------------------------------------------
     if ref_img_path is not None:
-        ith fits.open(ref_img_path) as hdu:
-        wcs = WCS(hdu[1].header)
-
+        with fits.open(ref_img_path) as hdu:
+            wcs = WCS(hdu[1].header)
+    
         ra, dec = wcs.pixel_to_world_values(
             phot_table["x"] - 0.5,
             phot_table["y"] - 0.5
