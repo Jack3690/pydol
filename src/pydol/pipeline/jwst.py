@@ -1,5 +1,6 @@
 from jwst.pipeline import Detector1Pipeline, Image2Pipeline, Image3Pipeline
 import os
+import multiprocessing as mp
 from pathlib import Path
 from crds import client
 
@@ -13,6 +14,7 @@ class JPipe:
         filter_name="",
         crds_context="jwst_1241.pmap",
         crds_dir=".",
+        n_cores=None,
         **kwargs,
     ):
 
@@ -28,6 +30,13 @@ class JPipe:
 
         self.filter_name = filter_name
 
+        # Core handling (STScI recommends controlled usage)
+        available_cores = mp.cpu_count()
+        if n_cores is None:
+            self.n_cores = available_cores
+        else:
+            self.n_cores = min(n_cores, available_cores)
+
         # ---------------- CRDS Setup ---------------- #
 
         crds_dir = Path(crds_dir)
@@ -39,7 +48,7 @@ class JPipe:
 
         client.set_crds_server("https://jwst-crds.stsci.edu")
 
-        # ---------------- Input Validation ---------------- #
+        # ---------------- Input Files ---------------- #
 
         if not input_files:
             raise ValueError("Input files list CANNOT be empty!")
@@ -59,14 +68,14 @@ class JPipe:
 
     def stage1_pipeline(self, filename):
 
-        # "all" = 12 cores (controlled by SLURM)
+        # STScI-supported internal parallelization
         steps_stage1 = {
             "jump": {
                 "expand_large_events": self.config["corr_snowball"],
-                "maximum_cores": "all",
+                "maximum_cores": "all", 
             },
             "ramp_fit": {
-                "maximum_cores": "all",
+                "maximum_cores": "all",   
             },
             "clean_flicker_noise": {
                 "skip": not self.config["corr_1byf"],
@@ -88,7 +97,7 @@ class JPipe:
 
     def stage2_pipeline(self, filename):
 
-        # Sequential per exposure (STScI recommendation)
+        # Sequential execution (STScI recommendation)
         Image2Pipeline.call(
             filename,
             output_dir=str(self.out_dir / "stage2"),
@@ -101,6 +110,7 @@ class JPipe:
 
     def stage3_pipeline(self, filenames):
 
+        # Stage 3 is memory heavy — run once per association
         Image3Pipeline.call(
             filenames,
             output_file=self.filter_name,
@@ -114,29 +124,32 @@ class JPipe:
 
     def __call__(self):
 
-        # -------- Stage 1 -------- #
+        # ---------------- Stage 1 ---------------- #
 
         uncal_files = [f for f in self.input_files if "uncal" in f]
+
         rate_files = []
 
         for f in uncal_files:
+
             rate_f = f.replace("stage0", "stage1").replace("uncal", "rate")
             rate_files.append(rate_f)
 
             if not Path(rate_f).exists():
                 self.stage1_pipeline(f)
 
-        # -------- Stage 2 -------- #
+        # ---------------- Stage 2 ---------------- #
 
         rate_files_to_run = [
             f for f in rate_files
             if not Path(f.replace("stage1", "stage2").replace("rate", "cal")).exists()
         ]
 
+        # STScI recommends NOT using multiprocessing for Stage 2
         for f in rate_files_to_run:
             self.stage2_pipeline(f)
 
-        # -------- Stage 3 -------- #
+        # ---------------- Stage 3 ---------------- #
 
         cal_files = [
             f.replace("stage1", "stage2").replace("rate", "cal")
