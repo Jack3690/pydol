@@ -17,7 +17,7 @@ pip install  "pydol[hst] @ git+https://github.com/Jack3690/pydol"
 ## Notebooks
 
 * Example                      : [Example.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/Example.ipynb)
-* pydol                        : [pydol.ipynb](https://github.com/Jack3690/pydol/blob/main/notebooks/pydol.ipynb)
+
 
 
 
