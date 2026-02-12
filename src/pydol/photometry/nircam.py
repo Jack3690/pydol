@@ -181,9 +181,10 @@ def nircam_phot(input_files, filter='f200w',output_dir='.', ref_img_path='.',
     filt = filt.upper()
     phot_table1 = phot_table[ (phot_table[f'sharpness_{filt}']**2<= sharp_cut) &
                                     (phot_table[f'crowd_{filt}']<= crowd_cut) &
-                                    (phot_table[f'flags_{filt}']<=type) &
                                     (phot_table[f'SNR_{filt}']>=SNR_min) ]
 
+  phot_table1 = phot_table1[phot_table['type']<=type]
+                  
   phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
   phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
   print('NIRCAM Stellar Photometry Completed!')
@@ -342,9 +343,10 @@ def nircam_phot_comp(param_file=None, m=[20], filter='f200w', region_name = '3',
         filt = filt.upper()
         phot_table1 = phot_table[ (phot_table[f'sharpness_{filt}']**2<= sharp_cut) &
                                         (phot_table[f'crowd_{filt}']<= crowd_cut) &
-                                        (phot_table[f'flags_{filt}']<=type) &
                                         (phot_table[f'SNR_{filt}']>=SNR_min) ]
-          
+        
+      phot_table1 = phot_table1[phot_table['type']<=type]  
+    
       phot_table.write(f"{output_dir}/fake_out_{region_name}_{m}_{out_id}.fits", overwrite=True)
       phot_table1.write(f'{output_dir}/fake_out_{region_name}_{m}_{out_id}_filt.fits', overwrite=True)
       print('NIRCAM Completeness Completed!')
