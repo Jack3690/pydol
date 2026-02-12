@@ -32,7 +32,6 @@ def acs_phot(
     param_file=None,
     sharp_cut=0.2,
     crowd_cut=2.25,
-    ncores=None
 ):
     """
     HST ACS photometry using DOLPHOT (HPC-friendly version)
@@ -49,20 +48,11 @@ def acs_phot(
     param_file : str or None
     sharp_cut : float
     crowd_cut : float
-    ncores : int or None
-        Number of cores to use (overrides SLURM_CPUS_PER_TASK)
     """
 
     if len(flt_files) < 1:
         raise ValueError("flt_files cannot be EMPTY")
 
-    # -------------------------------------------------------
-    # Thread control (portable across SLURM / local machine)
-    # -------------------------------------------------------
-    if ncores is None:
-        ncores = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
-
-    print(f"Using {ncores} CPU cores")
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -240,7 +230,6 @@ def acs_phot_comp(
     ang=245,
     nx=10,
     ny=10,
-    ncores=None
 ):
     """
     ACS completeness analysis using DOLPHOT (HPC-optimized version)
@@ -250,14 +239,6 @@ def acs_phot_comp(
         raise ValueError("param_file cannot be EMPTY")
 
     os.makedirs(output_dir, exist_ok=True)
-
-    # -------------------------------------------------------
-    # Thread control (portable)
-    # -------------------------------------------------------
-    if ncores is None:
-        ncores = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
-
-    print(f"Using {ncores} CPU cores")
 
     out_id = filter + cat_name
 
