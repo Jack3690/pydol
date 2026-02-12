@@ -179,9 +179,6 @@ def acs_phot(
     phot_table["ra"] = ra
     phot_table["dec"] = dec
 
-    phot_table['ra'] = coords[:, 0]
-    phot_table['dec'] = coords[:, 1]
-
     # -------------------------------------------------------
     # Quality filtering
     # -------------------------------------------------------
