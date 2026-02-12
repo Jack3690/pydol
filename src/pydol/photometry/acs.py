@@ -15,14 +15,6 @@ from .scripts.catalog_filter import box
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
-import os
-import subprocess
-import numpy as np
-from astropy.table import Table
-from astropy.io import fits
-from astropy.wcs import WCS
-
-
 def acs_phot(
     flt_files,
     filter='f435w',
