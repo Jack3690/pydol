@@ -32,6 +32,7 @@ def acs_phot(
     param_file=None,
     sharp_cut=0.2,
     crowd_cut=2.25,
+    SNR_min=5,
 ):
     """
     HST ACS photometry using DOLPHOT (HPC-friendly version)
