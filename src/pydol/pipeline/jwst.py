@@ -1,66 +1,72 @@
 from jwst.pipeline import Detector1Pipeline, Image2Pipeline, Image3Pipeline
-import jwst.associations
-
-from glob import glob
 import os
-import multiprocessing as mp
 from pathlib import Path
 from crds import client
-client.set_crds_server("https://jwst-crds.stsci.edu")
 
-class jpipe():
-    def __init__(self, input_files=[], out_dir='.', filter='',
-                 crds_context="jwst_1241.pmap", crds_dir='.', n_cores=None,
-                 **kwargs):
 
-        # Default custom configuration
+class JPipe:
+
+    def __init__(
+        self,
+        input_files,
+        out_dir=".",
+        filter_name="",
+        crds_context="jwst_1241.pmap",
+        crds_dir=".",
+        **kwargs,
+    ):
+
+        # ---------------- Configuration ---------------- #
+
         self.config = {
-            'corr_1byf': False,
-            'corr_snowball': True,
-            'fit_by_channel': False,
-            'background_method': 'median',
+            "corr_1byf": False,
+            "corr_snowball": True,
+            "fit_by_channel": False,
+            "background_method": "median",
         }
         self.config.update(kwargs)
-        self.filter_name = filter
 
-        # Core count
-        if n_cores is None or n_cores > mp.cpu_count():
-            self.n_cores = mp.cpu_count()
-        else:
-            self.n_cores = n_cores
+        self.filter_name = filter_name
 
-        # CRDS path setup
-        if os.access(crds_dir, os.W_OK):
-            os.makedirs(crds_dir, exist_ok=True)
-        else:
-            raise Exception(f"{crds_dir} is not WRITABLE")
+        # ---------------- CRDS Setup ---------------- #
 
-        os.environ['CRDS_PATH'] = str(crds_dir)
+        crds_dir = Path(crds_dir)
+        crds_dir.mkdir(parents=True, exist_ok=True)
+
+        os.environ["CRDS_PATH"] = str(crds_dir)
         os.environ["CRDS_SERVER_URL"] = "https://jwst-crds.stsci.edu"
         os.environ["CRDS_CONTEXT"] = crds_context
 
-        # Input files
-        if len(input_files) < 1:
-            raise Exception("Input files list CANNOT be empty!")
+        client.set_crds_server("https://jwst-crds.stsci.edu")
+
+        # ---------------- Input Validation ---------------- #
+
+        if not input_files:
+            raise ValueError("Input files list CANNOT be empty!")
+
         self.input_files = input_files
 
-        # Output directories
-        self.out_dir = out_dir
-        if os.access(out_dir, os.W_OK):
-            os.makedirs(out_dir + '/stage1/', exist_ok=True)
-            os.makedirs(out_dir + '/stage2/', exist_ok=True)
-            os.makedirs(out_dir + '/stage3/', exist_ok=True)
-        else:
-            raise Exception(f"{out_dir} is not WRITABLE")
+        # ---------------- Output Directories ---------------- #
 
-    # ---------------- STAGE 1 ---------------- #
+        self.out_dir = Path(out_dir)
+        (self.out_dir / "stage1").mkdir(parents=True, exist_ok=True)
+        (self.out_dir / "stage2").mkdir(parents=True, exist_ok=True)
+        (self.out_dir / "stage3").mkdir(parents=True, exist_ok=True)
+
+    # ==========================================================
+    #                       STAGE 1
+    # ==========================================================
 
     def stage1_pipeline(self, filename):
 
+        # "all" = 12 cores (controlled by SLURM)
         steps_stage1 = {
             "jump": {
                 "expand_large_events": self.config["corr_snowball"],
-                "maximum_cores": f"{self.n_cores}",
+                "maximum_cores": "all",
+            },
+            "ramp_fit": {
+                "maximum_cores": "all",
             },
             "clean_flicker_noise": {
                 "skip": not self.config["corr_1byf"],
@@ -68,61 +74,74 @@ class jpipe():
                 "background_method": self.config["background_method"],
             },
         }
-    
+
         Detector1Pipeline.call(
             filename,
-            output_dir=self.out_dir + "/stage1/",
+            output_dir=str(self.out_dir / "stage1"),
             save_results=True,
             steps=steps_stage1,
         )
 
-    # ---------------- STAGE 2 ---------------- #
+    # ==========================================================
+    #                       STAGE 2
+    # ==========================================================
 
     def stage2_pipeline(self, filename):
 
-        self.stage2 = Image2Pipeline()
-        self.stage2.call(filename, save_results=True, output_dir = self.out_dir + '/stage2/' )
+        # Sequential per exposure (STScI recommendation)
+        Image2Pipeline.call(
+            filename,
+            output_dir=str(self.out_dir / "stage2"),
+            save_results=True,
+        )
 
-    # ---------------- STAGE 3 ---------------- #
+    # ==========================================================
+    #                       STAGE 3
+    # ==========================================================
 
     def stage3_pipeline(self, filenames):
 
-        self.stage3 = Image3Pipeline()
-        self.stage3.call(filenames, save_results=True, output_file = self.filter_name,
-                         output_dir = self.out_dir + '/stage3/')
+        Image3Pipeline.call(
+            filenames,
+            output_file=self.filter_name,
+            output_dir=str(self.out_dir / "stage3"),
+            save_results=True,
+        )
 
-    # ---------------- MASTER CALL ---------------- #
+    # ==========================================================
+    #                       MASTER CALL
+    # ==========================================================
 
     def __call__(self):
 
-        # ------- Stage 1 ------- #
-        uncal_files = [i for i in self.input_files if 'uncal' in i]
+        # -------- Stage 1 -------- #
+
+        uncal_files = [f for f in self.input_files if "uncal" in f]
+        rate_files = []
 
         for f in uncal_files:
-            rate_f = f.replace('stage0', 'stage1').replace('uncal', 'rate')
-            if not os.path.exists(rate_f):
+            rate_f = f.replace("stage0", "stage1").replace("uncal", "rate")
+            rate_files.append(rate_f)
+
+            if not Path(rate_f).exists():
                 self.stage1_pipeline(f)
 
-        rate_files = [f.replace('stage0', 'stage1').replace('uncal', 'rate')
-                      for f in uncal_files]
+        # -------- Stage 2 -------- #
 
-        # ------- Stage 2 ------- #
         rate_files_to_run = [
             f for f in rate_files
-            if not os.path.exists(f.replace('stage1', 'stage2').replace('rate', 'cal'))
+            if not Path(f.replace("stage1", "stage2").replace("rate", "cal")).exists()
         ]
 
-        # STScI recommends NOT using multiprocessing for Stage 2
         for f in rate_files_to_run:
             self.stage2_pipeline(f)
 
-        # ------- Stage 3 ------- #
-        cal_files = [f.replace('stage1', 'stage2').replace('rate', 'cal')
-                     for f in rate_files]
+        # -------- Stage 3 -------- #
 
-        if len(cal_files) > 0:
+        cal_files = [
+            f.replace("stage1", "stage2").replace("rate", "cal")
+            for f in rate_files
+        ]
+
+        if cal_files:
             self.stage3_pipeline(cal_files)
-
-
-
-
