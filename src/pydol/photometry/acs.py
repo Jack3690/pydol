@@ -404,7 +404,7 @@ def acs_phot_comp(
     # -------------------------------------------------------
     # Filtering
     # -------------------------------------------------------
-     mask = np.ones(len(phot_table), dtype=bool)
+    mask = np.ones(len(phot_table), dtype=bool)
 
     for filt in filter.split("_"):
         filt = filt.upper()
