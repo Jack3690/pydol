@@ -24,8 +24,8 @@ class jpipe():
         self.filter_name = filter
 
         # Core count
-        if n_cores is None or n_cores > mp.cpu_count() - 1:
-            self.n_cores = mp.cpu_count() - 1
+        if n_cores is None or n_cores > mp.cpu_count():
+            self.n_cores = mp.cpu_count()
         else:
             self.n_cores = n_cores
 
@@ -122,6 +122,7 @@ class jpipe():
 
         if len(cal_files) > 0:
             self.stage3_pipeline(cal_files)
+
 
 
 
