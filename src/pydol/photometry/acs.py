@@ -15,287 +15,434 @@ from .scripts.catalog_filter import box
 param_dir_default = str(Path(__file__).parent.joinpath('params'))
 script_dir = str(Path(__file__).parent.joinpath('scripts'))
 
-def acs_phot(flt_files, filter='f435w',output_dir='.', drz_path='.',
-                cat_name='', param_file=None,sharp_cut=0.2,
-                crowd_cut=2.25):
+import os
+import subprocess
+import numpy as np
+from astropy.table import Table
+from astropy.io import fits
+from astropy.wcs import WCS
+
+
+def acs_phot(
+    flt_files,
+    filter='f435w',
+    output_dir='.',
+    drz_path='.',
+    cat_name='',
+    param_file=None,
+    sharp_cut=0.2,
+    crowd_cut=2.25,
+    ncores=None
+):
     """
-        Parameters
-        ---------
-        flt_files: list,
-                    list of paths to HST acs level 3 _flt.fits files
-        filter: str,
-                name of the ACS filter being processed
-        output_dir: str,
-                    path to output directory.
-                    Recommended: /photometry/
-        drz_path: str,
-                  path to level 3 drizzled image (_drz.fits) image.
-                  It is recommended to be inside /photometry/
-        cat_name: str,
-                  Output photometry catalogs will have prefix filter + cat_name
+    HST ACS photometry using DOLPHOT (HPC-friendly version)
 
-        Return
-        ------
-        None
+    Parameters
+    ----------
+    flt_files : list
+        List of ACS _flt.fits files
+    filter : str
+    output_dir : str
+    drz_path : str
+        Path (without .fits extension) to drz image
+    cat_name : str
+    param_file : str or None
+    sharp_cut : float
+    crowd_cut : float
+    ncores : int or None
+        Number of cores to use (overrides SLURM_CPUS_PER_TASK)
     """
-    if len(flt_files)<1:
-        raise Exception("crf_files cannot be EMPTY")
 
+    if len(flt_files) < 1:
+        raise ValueError("flt_files cannot be EMPTY")
 
-    subprocess.run([f"acsmask {drz_path}.fits"], shell=True)
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    # -------------------------------------------------------
+    # Thread control (portable across SLURM / local machine)
+    # -------------------------------------------------------
+    if ncores is None:
+        ncores = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
 
-    if param_file is None or not os.path.exists(param_file) :
-      print("Using Default params")
-      edit_params = True
-      param_file = param_dir_default + '/acs_dolphot.param'
+    print(f"Using {ncores} CPU cores")
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    subprocess.run(["acsmask", f"{drz_path}.fits"], check=True)
+
+    if param_file is None or not os.path.exists(param_file):
+        print("Using default DOLPHOT params")
+        edit_params = True
+        param_file = os.path.join(param_dir_default, "acs_dolphot.param")
     else:
-      edit_params = False
+        edit_params = False
 
     out_id = filter + cat_name
 
-   
+    # -------------------------------------------------------
+    # Prepare exposures
+    # -------------------------------------------------------
     if edit_params:
-       # Generating directories
-      exps = []
-      for i,f in enumerate(flt_files):
-          out_dir = f.split('/')[-1].split('.')[0]
-  
-          if not os.path.exists(f'{output_dir}/{out_dir}'):
-              os.mkdir(f'{output_dir}/{out_dir}')
-          if not os.path.exists(f"{output_dir}/{out_dir}/data.fits"):
-              subprocess.run([f"cp {f} {output_dir}/{out_dir}/data.fits"],
-                                  shell=True)
-          exps.append(f'{output_dir}/{out_dir}')
-  
-      # Applying ACS Mask
-      print("Running ACSMMASK, CALCSKY AND SPLITGROUPS...")
-      for f in exps:
-          if not os.path.exists(f"{f}/data.chip1.sky.fits") or not os.path.exists(f"{f}/data.chip2.sky.fits") :
-  
-              out = subprocess.run([f"acsmask {f}/data.fits"]
-                                      ,shell=True)
-              out = subprocess.run([f"splitgroups {f}/data.fits"]
-                                      ,shell=True)
-  
-              out = subprocess.run([f"calcsky {f}/data.chip1 15 35 4 2.25 2.00"]
-                                  , shell=True, capture_output=True)
-              
-              out = subprocess.run([f"calcsky {f}/data.chip2 15 35 4 2.25 2.00"]
-                                  , shell=True, capture_output=True)
-      # Preparing Parameter file DOLPHOT NIRCAM
-      """
-      Module for HST ACS photometry and completeness analysis using DOLPHOT.
 
-      Provides functions to run photometry, filter catalogs, and generate completeness tests for ACS data.
-      """
-      with open(param_file) as f:
-                  dat = f.readlines()
+        exps = []
 
-      dat[0] = f'Nimg = {int(2*len(exps))}                #number of images (int)\n'
-      dat[4] = f'img0_file = {drz_path}\n'
-      dat[5] = ''
+        for f in flt_files:
+            out_dir = os.path.basename(f).split('.')[0]
+            exp_dir = os.path.join(output_dir, out_dir)
+            os.makedirs(exp_dir, exist_ok=True)
 
-      for i,f in enumerate(exps):
-          dat[5] += f'img{2*i+1}_file = {f}/data.chip1          #image {2*i+1}\n'
-          dat[5] += f'img{2*i+2}_file = {f}/data.chip2          #image {2*i+2}\n'
+            data_fits = os.path.join(exp_dir, "data.fits")
+            if not os.path.exists(data_fits):
+                subprocess.run(["cp", f, data_fits], check=True)
 
-      with open(f"{output_dir}/acs_dolphot_{out_id}.param", 'w', encoding='utf-8') as f:
-          f.writelines(dat)
-      param_file = f"{output_dir}/acs_dolphot_{out_id}.param"
-    if not os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
-        # Running DOLPHOT ACS
-        p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file}"]
-                            , stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            text=True)
-   
-        while (line := p.stdout.readline()) != "":
-          print(line)
+            exps.append(exp_dir)
+
+        print("Running ACSMASK, SPLITGROUPS, CALCSKY...")
+
+        for exp_dir in exps:
+
+            chip1 = os.path.join(exp_dir, "data.chip1.sky.fits")
+            chip2 = os.path.join(exp_dir, "data.chip2.sky.fits")
+
+            if not (os.path.exists(chip1) and os.path.exists(chip2)):
+
+                subprocess.run(["acsmask", f"{exp_dir}/data.fits"], check=True)
+                subprocess.run(["splitgroups", f"{exp_dir}/data.fits"], check=True)
+
+                subprocess.run(
+                    ["calcsky", f"{exp_dir}/data.chip1", "15", "35", "4", "2.25", "2.00"],
+                    check=True
+                )
+
+                subprocess.run(
+                    ["calcsky", f"{exp_dir}/data.chip2", "15", "35", "4", "2.25", "2.00"],
+                    check=True
+                )
+
+        # -------------------------------------------------------
+        # Rewrite param file
+        # -------------------------------------------------------
+        with open(param_file) as f:
+            dat = f.readlines()
+
+        dat[0] = f"Nimg = {2 * len(exps)}\n"
+        dat[4] = f"img0_file = {drz_path}\n"
+        dat[5] = ""
+
+        for i, exp_dir in enumerate(exps):
+            dat[5] += f"img{2*i+1}_file = {exp_dir}/data.chip1\n"
+            dat[5] += f"img{2*i+2}_file = {exp_dir}/data.chip2\n"
+
+        param_file = os.path.join(output_dir, f"acs_dolphot_{out_id}.param")
+        with open(param_file, "w") as f:
+            f.writelines(dat)
+
+    # -------------------------------------------------------
+    # Run DOLPHOT
+    # -------------------------------------------------------
+    out_fits = os.path.join(output_dir, f"{out_id}_photometry.fits")
+
+    if not os.path.exists(out_fits):
+
+        print("Running DOLPHOT...")
+
+        process = subprocess.Popen(
+            ["dolphot", f"{output_dir}/out", f"-p{param_file}"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+
+        for line in process.stdout:
+            print(line, end="")
+
+        process.wait()
+
+        if process.returncode != 0:
+            raise RuntimeError("DOLPHOT failed.")
+
     else:
-        print(f"{output_dir}/{out_id}_photometry.fits already exists.")
-    # Generating Astropy FITS Table
+        print(f"{out_fits} already exists.")
 
-    out = subprocess.run([f"python {script_dir}/to_table.py --o {out_id}_photometry --f {output_dir}/out --d ACS"],
-                    shell=True)
-      
-    phot_table = Table.read(f"{output_dir}/{out_id}_photometry.fits")
+    # -------------------------------------------------------
+    # Convert to FITS table
+    # -------------------------------------------------------
+    subprocess.run(
+        ["python", f"{script_dir}/to_table.py",
+         "--o", f"{out_id}_photometry",
+         "--f", f"{output_dir}/out",
+         "--d", "ACS"],
+        check=True
+    )
 
-    # Assingning RA-Dec using reference image
-    hdu = fits.open(f"{drz_path}.fits")[0]
+    phot_table = Table.read(out_fits)
 
-    wcs = WCS(hdu.header)
-    positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
+    # -------------------------------------------------------
+    # Add RA/Dec
+    # -------------------------------------------------------
+    with fits.open(drz_path) as hdu:
+        wcs = WCS(hdu[1].header)
 
-    coords = np.array(wcs.pixel_to_world_values(positions))
+    ra, dec = wcs.pixel_to_world_values(
+        phot_table["x"] - 0.5,
+        phot_table["y"] - 0.5
+    )
 
-    phot_table['ra']  = coords[:,0]
-    phot_table['dec'] = coords[:,1]
+    phot_table["ra"] = ra
+    phot_table["dec"] = dec
 
-    # Filtering stellar photometry catalog using William et.al (2021) (Default)
-    phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                (phot_table['obj_crowd']<= crowd_cut) &
-                                (phot_table['type'] <= 2)]
+    phot_table['ra'] = coords[:, 0]
+    phot_table['dec'] = coords[:, 1]
 
-    flag_keys = []
-    for key in phot_table1.keys():
-        if 'flag' in key:
-            flag_keys.append(key)
-    for i in flag_keys:
-        phot_table1  = phot_table1[phot_table1[i]<=2]
+    # -------------------------------------------------------
+    # Quality filtering
+    # -------------------------------------------------------
+    mask = np.ones(len(phot_table), dtype=bool)
 
-    SNR_keys = []
-    for key in phot_table1.keys():
-        if 'SNR' in key:
-            SNR_keys.append(key)
-    for i in SNR_keys:
-        phot_table1  = phot_table1[phot_table1[i]>=5]
+    for filt in filter.split("_"):
+        filt = filt.upper()
+        mask &= (
+            (phot_table[f"sharpness_{filt}"]**2 <= sharp_cut) &
+            (phot_table[f"crowd_{filt}"] <= crowd_cut) &
+            (phot_table[f"SNR_{filt}"] >= SNR_min)
+        )
 
-    phot_table.write(f'{output_dir}/{out_id}_photometry.fits', overwrite=True)
-    phot_table1.write(f'{output_dir}/{out_id}_photometry_filt.fits', overwrite=True)
-    print('ACS Stellar Photometry Completed!')
+    mask &= phot_table["type"] <= type
 
-def acs_phot_comp(param_file=None, m=[20], filter='f814w', region_name = '3',
-                     output_dir='.', tab_path='.', ref_img_path=None,cat_name='', 
-                     sharp_cut=0.2, crowd_cut=2.25, SNR_min=5, type=2,
-                     ra_col='ra',dec_col='dec',ra=0,dec=0, shape='box',
-                     width=24/3600,height=24/3600,ang=245, nx=10,ny=10):
+    phot_table_filt = phot_table[mask]
+
+    phot_table.write(out_fits, overwrite=True)
+    phot_table_filt.write(
+        os.path.join(output_dir, f"{out_id}_photometry_filt.fits"),
+        overwrite=True
+    )
+
+    print("ACS Stellar Photometry Completed!")
+
+def acs_phot_comp(
+    param_file=None,
+    m=[20],
+    filter='f814w',
+    region_name='3',
+    output_dir='.',
+    tab_path='.',
+    ref_img_path=None,
+    cat_name='',
+    sharp_cut=0.2,
+    crowd_cut=2.25,
+    SNR_min=5,
+    type=2,
+    ra_col='ra',
+    dec_col='dec',
+    ra=0,
+    dec=0,
+    shape='box',
+    width=24/3600,
+    height=24/3600,
+    ang=245,
+    nx=10,
+    ny=10,
+    ncores=None
+):
     """
-        Parameters
-        ---------
-        filter: str,
-                name of the ACS filter being processed
-        output_dir: str,
-                    path to output directory.
-                    Recommended: /photometry/
-        tab_path: str,
-                  path to photometry table.
-                  It is recommended to be inside /photometry/
-        cat_name: str,
-                  Output photometry catalogs will have prefix filter + cat_name
-
-        Return
-        ------
-        None
+    ACS completeness analysis using DOLPHOT (HPC-optimized version)
     """
-    if param_file is None or not os.path.exists(param_file) :
-      raise Exception("param_file cannot be EMPTY")
-      
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+
+    if param_file is None or not os.path.exists(param_file):
+        raise ValueError("param_file cannot be EMPTY")
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    # -------------------------------------------------------
+    # Thread control (portable)
+    # -------------------------------------------------------
+    if ncores is None:
+        ncores = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
+
+    print(f"Using {ncores} CPU cores")
 
     out_id = filter + cat_name
 
-     # Completeness
+    # -------------------------------------------------------
+    # Region selection
+    # -------------------------------------------------------
     tab = Table.read(tab_path)
-    if shape=='box':
-      tab_n = box(tab,ra_col,dec_col, ra, dec, 0,0, width, height, angle=ang)
-    elif shape=='circle':
-      tab_n = tab.copy()
-      tab_n['r'] = angular_separation(tab[ra_col]*u.deg, tab[dec_col]*u.deg,
-                                      ra*u.deg, dec*u.deg).to(u.deg).value
-      tab_n = tab_n[tab_n['r']<=width]
-      
-      x_cen = 0.5*(tab_n['x'].min() + tab['x'].max())
-      y_cen = 0.5*(tab_n['y'].min() + tab['y'].max())
-      r_pix_max = np.sqrt( (tab_n['x'] - x_cen)**2 + (tab_n['y'] - y_cen)**2).max()
-      
-    x = tab_n['x']
-    y = tab_n['y']
-    xx, yy = np.meshgrid(np.linspace(x.min() + 10, x.max() - 10, nx),
-                         np.linspace(y.min() + 10, y.max() - 10, ny))
-    
-    # Flatten and convert to integer
-    x, y = xx.ravel().astype(int), yy.ravel().astype(int)
-    if shape=='circle':
-      r_pix = np.sqrt((x-x_cen)**2 + (y-y_cen)**2)
-      ind = r_pix<=r_pix_max
-      x = x[ind]
-      y = y[ind]
-    
-    # Create the 'ext' and 'chip' columns directly
+
+    if shape == 'box':
+        tab_n = box(tab, ra_col, dec_col, ra, dec, 0, 0, width, height, angle=ang)
+
+    elif shape == 'circle':
+        tab_n = tab.copy()
+        tab_n['r'] = angular_separation(
+            tab[ra_col]*u.deg,
+            tab[dec_col]*u.deg,
+            ra*u.deg,
+            dec*u.deg
+        ).to(u.deg).value
+
+        tab_n = tab_n[tab_n['r'] <= width]
+
+        x_cen = 0.5 * (tab_n['x'].min() + tab_n['x'].max())
+        y_cen = 0.5 * (tab_n['y'].min() + tab_n['y'].max())
+        r_pix_max = np.sqrt(
+            (tab_n['x'] - x_cen)**2 +
+            (tab_n['y'] - y_cen)**2
+        ).max()
+
+    # -------------------------------------------------------
+    # Fake star grid
+    # -------------------------------------------------------
+    xvals = tab_n['x']
+    yvals = tab_n['y']
+
+    xx, yy = np.meshgrid(
+        np.linspace(xvals.min() + 10, xvals.max() - 10, nx),
+        np.linspace(yvals.min() + 10, yvals.max() - 10, ny)
+    )
+
+    x = xx.ravel().astype(int)
+    y = yy.ravel().astype(int)
+
+    if shape == 'circle':
+        r_pix = np.sqrt((x - x_cen)**2 + (y - y_cen)**2)
+        ind = r_pix <= r_pix_max
+        x = x[ind]
+        y = y[ind]
+
     ext = np.zeros_like(x)
     chip = np.ones_like(x)
-    
-    # Create an array for all 'mag' columns at once
-    mags = np.array([np.full(x.shape, m_) for m_ in m]).T
-    
-    # Build the DataFrame in a single step
-    columns = {
+
+    mags = np.array([np.full(x.shape, mag_) for mag_ in m]).T
+
+    data = {
         'ext': ext,
         'chip': chip,
         'x': x,
-        'y': y,
+        'y': y
     }
+
     for i in range(len(m)):
-        columns[f'mag_{i}'] = mags[:, i]
+        data[f'mag_{i}'] = mags[:, i]
 
-    m = '_'.join(map(str,m))
-    df = pd.DataFrame(columns)
-    df.to_csv(f'{output_dir}/fake_{region_name}_{m}_{out_id}.txt', 
-              sep=' ', index=False, header=False)
+    mag_string = "_".join(map(str, m))
 
+    fake_file = os.path.join(
+        output_dir,
+        f"fake_{region_name}_{mag_string}_{out_id}.txt"
+    )
+
+    pd.DataFrame(data).to_csv(
+        fake_file,
+        sep=' ',
+        index=False,
+        header=False
+    )
+
+    # -------------------------------------------------------
+    # Modify param file
+    # -------------------------------------------------------
     with open(param_file) as f:
-      dats = f.readlines()
+        dats = f.readlines()
 
-    for n,dat in enumerate(dats):
-      if 'FakeStars' in dat:
-        break
+    for n, line in enumerate(dats):
+        if 'FakeStars' in line:
+            break
 
-    dats[n] = f'FakeStars =   {output_dir}/fake_{region_name}_{m}_{out_id}.txt\n'
-    dats[n+1] = f'FakeOut =    {output_dir}/fake_{region_name}_{m}_{out_id}.fake\n'
-    param_file_new = param_file.replace('.param',f'_{region_name}.param')
-    with open(param_file_new,'w', encoding='utf-8') as f:
-      f.writelines(dats)
-    if os.path.exists(f"{output_dir}/{out_id}_photometry.fits"):
-        # Running DOLPHOT ACS
-        p = subprocess.Popen(["dolphot", f"{output_dir}/out", f"-p{param_file_new}"]
-                            , stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                             text=True)
-        while (line := p.stdout.readline()) != "":
-          print(line)
-    # Generating Astropy FITS Table
+    dats[n] = f"FakeStars =   {fake_file}\n"
+    dats[n+1] = (
+        f"FakeOut =    "
+        f"{output_dir}/fake_{region_name}_{mag_string}_{out_id}.fake\n"
+    )
 
-        cmd =  f"python {script_dir}/to_table_fake.py" 
-        cmd += f" --f {output_dir}/fake_{region_name}_{m}_{out_id}.fake"
-        cmd += f" --d ACS"
-        cmd += f" --c {output_dir}/out.columns"
-        cmd += f" --o fake_out_{region_name}_{m}_{out_id}"
-        out = subprocess.run([cmd], shell=True)
+    param_file_new = param_file.replace(
+        '.param',
+        f'_{region_name}.param'
+    )
 
-        phot_table = Table.read(f"{output_dir}/fake_out_{region_name}_{m}_{out_id}.fits")
+    with open(param_file_new, 'w') as f:
+        f.writelines(dats)
 
-        if ref_img_path is not None:
-        # Assingning RA-Dec using reference image
-          hdu = fits.open(f"{ref_img_path}.fits")[0]
-      
-          wcs = WCS(hdu.header)
-          positions = np.transpose([phot_table['x'] - 0.5, phot_table['y']-0.5])
-      
-          coords = np.array(wcs.pixel_to_world_values(positions))
-      
-          phot_table['ra']  = coords[:,0]
-          phot_table['dec'] = coords[:,1]
+    # -------------------------------------------------------
+    # Run DOLPHOT fake stars
+    # -------------------------------------------------------
+    phot_file = os.path.join(output_dir, f"{out_id}_photometry.fits")
 
-        # Filtering stellar photometry catalog using Warfield et.al (2023)
-        phot_table1 = phot_table[ (phot_table['obj_sharpness']**2<= sharp_cut) &
-                                    (phot_table['obj_crowd']<= crowd_cut) &
-                                    (phot_table['type'] <= type)]
-        flag_keys = []
-        for key in phot_table1.keys():
-            if 'flag' in key:
-                flag_keys.append(key)
-        for i in flag_keys:
-            phot_table1  = phot_table1[phot_table1[i]<=type]
+    if not os.path.exists(phot_file):
+        print(f"{phot_file} NOT FOUND!!")
+        return
 
-        SNR_keys = []
-        for key in phot_table1.keys():
-            if 'SNR' in key:
-                SNR_keys.append(key)
-        for i in SNR_keys:
-            phot_table1  = phot_table1[phot_table1[i]>=SNR_min]
+    print("Running DOLPHOT fake star test...")
 
-        phot_table1.write(f'{output_dir}/fake_out_{region_name}_{m}_{out_id}_filt.fits', overwrite=True)
-        print('ACS Completeness Completed!')
-    else:
-      print(f"{output_dir}/{out_id}_photometry.fits NOT FOUND!!")
+    process = subprocess.Popen(
+        ["dolphot", f"{output_dir}/out", f"-p{param_file_new}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
+    )
+
+    for line in process.stdout:
+        print(line, end="")
+
+    process.wait()
+
+    if process.returncode != 0:
+        raise RuntimeError("DOLPHOT fake star run failed.")
+
+    # -------------------------------------------------------
+    # Convert fake output
+    # -------------------------------------------------------
+    subprocess.run([
+        "python",
+        f"{script_dir}/to_table_fake.py",
+        "--f", f"{output_dir}/fake_{region_name}_{mag_string}_{out_id}.fake",
+        "--d", "ACS",
+        "--c", f"{output_dir}/out.columns",
+        "--o", f"fake_out_{region_name}_{mag_string}_{out_id}"
+    ], check=True)
+
+    fake_out_fits = os.path.join(
+        output_dir,
+        f"fake_out_{region_name}_{mag_string}_{out_id}.fits"
+    )
+
+    phot_table = Table.read(fake_out_fits)
+
+    # -------------------------------------------------------
+    # Add RA/Dec if requested
+    # -------------------------------------------------------
+    if ref_img_path is not None:
+        ith fits.open(ref_img_path) as hdu:
+        wcs = WCS(hdu[1].header)
+
+        ra, dec = wcs.pixel_to_world_values(
+            phot_table["x"] - 0.5,
+            phot_table["y"] - 0.5
+        )
+    
+        phot_table["ra"] = ra
+        phot_table["dec"] = dec  
+
+    # -------------------------------------------------------
+    # Filtering
+    # -------------------------------------------------------
+     mask = np.ones(len(phot_table), dtype=bool)
+
+    for filt in filter.split("_"):
+        filt = filt.upper()
+        mask &= (
+            (phot_table[f"sharpness_{filt}"]**2 <= sharp_cut) &
+            (phot_table[f"crowd_{filt}"] <= crowd_cut) &
+            (phot_table[f"SNR_{filt}"] >= SNR_min)
+        )
+
+    mask &= phot_table["type"] <= type
+
+    phot_table_filt = phot_table[mask]
+    phot_table.write(fake_out_fits, overwrite=True)
+    phot_table_filt.write(
+        os.path.join(
+            output_dir,
+            f"fake_out_{region_name}_{mag_string}_{out_id}_filt.fits"
+        ),
+        overwrite=True
+    )
+
+    print("ACS Completeness Completed!")
