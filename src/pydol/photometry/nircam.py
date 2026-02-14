@@ -81,7 +81,12 @@ def nircam_phot(
     ref_img = Path(f"{ref_img_path}.fits")
 
     # Apply mask to reference
-    run_cmd(["nircammask", str(ref_img)])
+
+    with fits.open(ref_img) as hdul:
+        header = hdul[0].header
+        if 'DOL_NIRCAM' not in header:
+             run_cmd(["nircammask", str(ref_img)])
+   
 
     if param_file is None or not Path(param_file).exists():
         logger.info("Using default parameter file")
