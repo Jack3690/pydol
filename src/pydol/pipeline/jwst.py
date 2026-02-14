@@ -11,7 +11,7 @@ class jpipe:
         self,
         input_files,
         out_dir=".",
-        filter_name="",
+        filter="",
         crds_context="jwst_1241.pmap",
         crds_dir=".",
         n_cores=None,
@@ -28,7 +28,7 @@ class jpipe:
         }
         self.config.update(kwargs)
 
-        self.filter_name = filter_name
+        self.filter = filter
 
         # Core handling (STScI recommends controlled usage)
         available_cores = mp.cpu_count()
@@ -111,11 +111,9 @@ class jpipe:
     def stage3_pipeline(self, filenames):
 
         # Stage 3 is memory heavy — run once per association
-        img3 = Image3Pipeline()
-        img3.output_file = self.filter_name
-        img3.call(
+        Image3Pipeline.call(
             filenames,
-            output_file=self.filter_name,
+            output_file=self.filter,
             output_dir=str(self.out_dir / "stage3"),
             save_results=True,
         )
@@ -160,6 +158,7 @@ class jpipe:
 
         if cal_files:
             self.stage3_pipeline(cal_files)
+
 
 
 
