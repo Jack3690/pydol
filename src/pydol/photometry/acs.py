@@ -49,7 +49,10 @@ def acs_phot(
 
     os.makedirs(output_dir, exist_ok=True)
 
-    subprocess.run(["acsmask", f"{drz_path}.fits"], check=True)
+    with fits.open(f"{drz_path}.fits") as hdul:
+        header = hdul[0].header
+        if 'DOL_ACS' not in header:
+            subprocess.run(["acsmask", f"{drz_path}.fits"], check=True)
 
     if param_file is None or not os.path.exists(param_file):
         print("Using default DOLPHOT params")
