@@ -72,10 +72,10 @@ class JPipe:
         steps_stage1 = {
             "jump": {
                 "expand_large_events": self.config["corr_snowball"],
-                "maximum_cores": "all", 
+                "maximum_cores": self.n_cores, 
             },
             "ramp_fit": {
-                "maximum_cores": "all",   
+                "maximum_cores": self.n_cores,   
             },
             "clean_flicker_noise": {
                 "skip": not self.config["corr_1byf"],
@@ -158,3 +158,4 @@ class JPipe:
 
         if cal_files:
             self.stage3_pipeline(cal_files)
+
