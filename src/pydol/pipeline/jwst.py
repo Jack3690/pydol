@@ -5,7 +5,7 @@ from pathlib import Path
 from crds import client
 
 
-class JPipe:
+class jpipe:
 
     def __init__(
         self,
@@ -158,4 +158,5 @@ class JPipe:
 
         if cal_files:
             self.stage3_pipeline(cal_files)
+
 
