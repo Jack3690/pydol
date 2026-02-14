@@ -111,7 +111,9 @@ class jpipe:
     def stage3_pipeline(self, filenames):
 
         # Stage 3 is memory heavy — run once per association
-        Image3Pipeline.call(
+        img3 = Image3Pipeline()
+        img3.output_file = self.filter_name
+        img3.call(
             filenames,
             output_file=self.filter_name,
             output_dir=str(self.out_dir / "stage3"),
@@ -158,6 +160,7 @@ class jpipe:
 
         if cal_files:
             self.stage3_pipeline(cal_files)
+
 
 
 
