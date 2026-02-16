@@ -164,7 +164,7 @@ def acs_phot(
     # -------------------------------------------------------
     # Add RA/Dec
     # -------------------------------------------------------
-    with fits.open(drz_path) as hdu:
+    with fits.open(drz_path+'.fits') as hdu:
         wcs = WCS(hdu[1].header)
 
     ra, dec = wcs.pixel_to_world_values(
