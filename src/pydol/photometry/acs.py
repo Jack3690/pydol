@@ -191,13 +191,11 @@ def acs_phot(
 
     mask &= phot_table["type"] <= obj_type
 
-    phot_table_filt = phot_table[mask]
+    phot_table_filt = phot_table[mask].copy()
 
     phot_table.write(out_fits, overwrite=True)
-    phot_table_filt.write(
-        os.path.join(output_dir, f"{out_id}_photometry_filt.fits"),
-        overwrite=True
-    )
+    phot_table_filt.write(f"{output_dir}/{out_id}_photometry_filt.fits",
+                          overwrite=True)
 
     print("ACS Stellar Photometry Completed!")
 
@@ -412,12 +410,7 @@ def acs_phot_comp(
 
     phot_table_filt = phot_table[mask]
     phot_table.write(fake_out_fits, overwrite=True)
-    phot_table_filt.write(
-        os.path.join(
-            output_dir,
-            f"fake_out_{region_name}_{mag_string}_{out_id}_filt.fits"
-        ),
-        overwrite=True
-    )
+    phot_table_filt.write(f"{output_dir}/fake_out_{region_name}_{mag_string}_{out_id}_filt.fits",
+        overwrite=True)
 
     print("ACS Completeness Completed!")
