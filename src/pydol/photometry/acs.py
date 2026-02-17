@@ -24,6 +24,7 @@ def acs_phot(
     param_file=None,
     sharp_cut=0.2,
     crowd_cut=2.25,
+    obj_type=2,
     SNR_min=5,
 ):
     """
@@ -188,7 +189,7 @@ def acs_phot(
             (phot_table[f"SNR_{filt}"] >= SNR_min)
         )
 
-    mask &= phot_table["type"] <= type
+    mask &= phot_table["type"] <= obj_type
 
     phot_table_filt = phot_table[mask]
 
@@ -212,7 +213,7 @@ def acs_phot_comp(
     sharp_cut=0.2,
     crowd_cut=2.25,
     SNR_min=5,
-    type=2,
+    obj_type=2,
     ra_col='ra',
     dec_col='dec',
     ra=0,
@@ -407,7 +408,7 @@ def acs_phot_comp(
             (phot_table[f"SNR_{filt}"] >= SNR_min)
         )
 
-    mask &= phot_table["type"] <= type
+    mask &= phot_table["type"] <= obj_type
 
     phot_table_filt = phot_table[mask]
     phot_table.write(fake_out_fits, overwrite=True)
