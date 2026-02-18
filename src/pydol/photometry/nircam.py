@@ -67,6 +67,7 @@ def nircam_phot(
     crowd_cut=0.5,
     SNR_min=5,
     type=2,
+    quality_filters = "f200w"
 ):
 
     if not input_files:
@@ -189,7 +190,7 @@ def nircam_phot(
 
     mask = np.ones(len(phot_table), dtype=bool)
 
-    for filt in filter.split("_"):
+    for filt in quality_filters.split("_"):
         filt = filt.upper()
         mask &= (
             (phot_table[f"sharpness_{filt}"]**2 <= sharp_cut) &
@@ -234,6 +235,7 @@ def nircam_phot_comp(
     ang=245,
     nx=10,
     ny=10,
+    quality_filters='f200w',
 ):
 
     param_file = Path(param_file)
@@ -419,7 +421,7 @@ def nircam_phot_comp(
 
     mask = np.ones(len(phot_table), dtype=bool)
 
-    for filt in filter.split("_"):
+    for filt in quality_filters.split("_"):
         filt = filt.upper()
         mask &= (
             (phot_table[f"sharpness_{filt}"]**2 <= sharp_cut) &
