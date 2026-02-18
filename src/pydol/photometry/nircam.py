@@ -166,6 +166,8 @@ def nircam_phot(
             "--f", str(output_dir / "out"),
             "--d", "NIRCAM",
         ])
+    else:
+        print(f"{phot_file} already exists!!!")
 
     phot_table = Table.read(phot_file)
 
@@ -185,7 +187,7 @@ def nircam_phot(
     phot_table["dec"] = dec
 
     # --------------------------------------------------------------
-    # Filtering (FIXED multi-filter logic)
+    # Warfield et.al (2023)
     # --------------------------------------------------------------
 
     mask = np.ones(len(phot_table), dtype=bool)
