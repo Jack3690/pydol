@@ -84,8 +84,8 @@ def nircam_phot(
     # Apply mask to reference
 
     with fits.open(ref_img) as hdul:
-        header = hdul[0].header
-        if 'DOL_NIRCAM' not in header:
+        header = hdul[1].header
+        if 'DOL_NIRC' not in header:
              run_cmd(["nircammask", str(ref_img)])
    
 
