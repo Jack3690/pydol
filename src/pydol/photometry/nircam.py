@@ -118,8 +118,9 @@ def nircam_phot(
             filter_wavelength = float(hdul[0].header["FILTER"][1:-1])
             filter_wavelengths.append(filter_wavelength)
 
-        run_cmd(["nircammask", str(data_path)])
-        run_cmd(["calcsky", str(exp_dir / "data"), "10", "25", "2", "2.25", "2.00"])
+        if not os.path.exists(exp_dir / "data.sky.fits"):
+            run_cmd(["nircammask", str(data_path)])
+            run_cmd(["calcsky", str(exp_dir / "data"), "10", "25", "2", "2.25", "2.00"])
 
         exps.append(exp_dir)
 
