@@ -328,7 +328,7 @@ def gen_CMD(
                        & (df_iso['label']<=isochrone_params['label_max'])]
                         
         for i,age in enumerate(isochrone_params['ages']):
-            t = df_iso[(np.round(df_iso['logAge'],1) == age)]
+            t = df_iso[(np.round(df_iso['logAge'],5) == age)]
             for Z in isochrone_params['met']:
                 subset = t[t['Zini'] == Z]
                 x_iso = subset[f"{filters['filt1'].upper()}mag"] + AF1 - (
@@ -536,7 +536,7 @@ def gen_CMD_xcut(tab,
         tab = tab[tab[col] <= error_settings['mag_err_lim']]
         
     df_iso = df_iso[df_iso['Zini']==isochrone_params['met']]
-    df_iso = df_iso[np.round(df_iso['logAge'],1)==isochrone_params['age']]
+    df_iso = df_iso[np.round(df_iso['logAge'],5)==isochrone_params['age']]
 
 
     if x_cut_settings['cmd_ylo'] is None or x_cut_settings['cmd_yhi'] is None:
@@ -899,7 +899,7 @@ def gen_CMD_ycut(tab,
         tab = tab[tab[col] <= error_settings['mag_err_lim']]
         
     df_iso = df_iso[df_iso['Zini']==isochrone_params['met']]
-    df_iso = df_iso[np.round(df_iso['logAge'],1)==isochrone_params['age']]
+    df_iso = df_iso[np.round(df_iso['logAge'],5)==isochrone_params['age']]
 
     y_cut_settings['cmd_ylo'] = y_cut_settings['y_lo']
     y_cut_settings['cmd_yhi'] = y_cut_settings['y_hi']
