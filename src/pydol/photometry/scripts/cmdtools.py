@@ -489,6 +489,7 @@ def gen_CMD_xcut(tab,
     plot_settings.setdefault('print_met',False)
     plot_settings.setdefault('legend.ncols',1)
     plot_settings.setdefault('cmap','jet')
+    plot_settings.setdefault('iso.color','black')
     
     
     error_settings.setdefault('mag_err_cols', [
@@ -628,7 +629,9 @@ def gen_CMD_xcut(tab,
         x_i = x_i[ind]  
         y_i = y_i[ind]
         
-        ax.plot(x_iso,y_iso, zorder=200, color='green',lw=plot_settings['lw'])
+        ax.plot(x_iso,y_iso, zorder=200, 
+                color=plot_settings['iso.color'],
+                lw=plot_settings['lw'])
         
         legends.append(f'Age = {age_lin}')
 
