@@ -4,7 +4,7 @@ Nimg = 8                #number of images (int)
 #  or applied to all images (img_...)
 img0_file = ../data/stage2/f115w_3904_i2d
 img1_file = ../data/stage2/f115w_3904_i2d
-
+#
 # The following photometers affect the finding and measurement of stars
 photsec =               #section: group, chip, (X,Y)0, (X,Y)1
 RCentroid = 2           #centroid box size (int>0)
@@ -23,7 +23,7 @@ PosStep = 0.25          #search step for position iterations (flt)
 dPosMax = 3.0           #maximum single-step in position iterations (flt)
 RCombine = 1.5          #minimum separation for two stars for cleaning (flt)
 SigPSF = 5.0              #min S/N for psf parameter fits (flt)
-
+#
 # Settings to enable/disable features
 UseWCS = 2              #use WCS info in alignment (int 0=no, 1=shift/rotate/scale, 2=full)
 Align = 1               #align images? (int 0=no,1=const,2=lin,3=cube)
