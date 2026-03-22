@@ -869,6 +869,7 @@ def gen_CMD_ycut(tab,
     
     error_settings.setdefault('mag_err_lim',0.2)
     error_settings.setdefault('ref_xpos',-0.25)
+    error_settings.setdefault('ref_xpos_dx',0.5)
     
     kde_contours.setdefault('gen_kde',False)
     kde_contours.setdefault('gen_contours',False)
@@ -1126,7 +1127,9 @@ def gen_CMD_ycut(tab,
     # Error models
     if not other_settings['skip_data']:
         ref = tab[f"mag_vega_{filters['filt3'].upper()}"]
-        ref_new = np.arange(np.ceil(y.min()),np.floor(y.max())+0.5,0.5)
+        ref_new = np.arange(np.ceil(y.min()), 
+                            np.floor(y.max()) + error_settings['ref_xpos_dx'],
+                            error_settings['ref_xpos_dx'])
 
         mag_err1 = tab[error_settings['mag_err_cols'][0]]
         mag_err2 = tab[error_settings['mag_err_cols'][1]]
