@@ -884,8 +884,6 @@ def gen_CMD_ycut(tab,
     y_cut_settings.setdefault('cmd_ylo', None)
     y_cut_settings.setdefault('cmd_yhi', None)
     y_cut_settings.setdefault('perp_iso', False)
-    y_cut_settings.setdefault('y_lo', 22)
-    y_cut_settings.setdefault('y_hi', 26.5)
     y_cut_settings.setdefault('dx', 0.5)
     y_cut_settings.setdefault('rgb_xlo', 0.5)
     y_cut_settings.setdefault('rgb_xhi', 2)
@@ -905,8 +903,6 @@ def gen_CMD_ycut(tab,
     df_iso = df_iso[df_iso['Zini']==isochrone_params['met']]
     df_iso = df_iso[np.round(df_iso['logAge'],5)==isochrone_params['age']]
 
-    y_cut_settings['cmd_ylo'] = y_cut_settings['y_lo']
-    y_cut_settings['cmd_yhi'] = y_cut_settings['y_hi']
     
     age = isochrone_params['age'] 
     if age <6:
