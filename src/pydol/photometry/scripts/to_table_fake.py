@@ -20,11 +20,17 @@ if __name__ == "__main__":
 			if 'Measured' in i:
 				n_filt = (n - 12)//13
 				break
-	n_image = 0
+	filts = [cols[12 + i*13].split(f'{options.detector.upper()}_')[-1][:-1] for i in range(n_filt)]
+	
+	n_image_filt = {filt: 0 for filt in filts}
+	
 	for i in cols:
 	    if 'Measured counts' in i:
-	        n_image+=1
-	filts = [cols[12+ i*13].split(f'{options.detector.upper()}_')[-1][:-1] for i in range(n_filt)]
+			for filt in filts:
+				if filt in i:
+					n_image_filt[filt] +=1
+					
+	n_image = sum(n_image_filt.values())		
 	col_source = ['ext','chip','x','y','chi_fit','obj_SNR','obj_sharpness','obj_roundness','dir_maj_axis','obj_crowd','type', 'pass_det']
 	col_filt = ['counts_tot','sky_tot','count_rate','count_rate_err','mag_vega','mag_ubvri','mag_err','chi','SNR','sharpness','roundness','crowd','flags']
 	
@@ -43,11 +49,19 @@ if __name__ == "__main__":
 	with open(options.filename) as f:
 		dat = f.readlines()
 
-	start = 4 + 2*n_image
+	# https://dolphot-jwst.readthedocs.io/en/latest/asts/output.html
+	start = 4 + 2*n_image 
 	end = start + len(cols_out)
 	
 	dat = np.array([i.split()[:end] for i in dat]).astype(float)
-	mag_index = np.arange(5,len(filts)*16,16).astype(int)
+
+	# Input Magnitude Indices
+	mag_index = [5]
+	for i in n_image_filt.values():
+	    mag_index.append(mag_index[-1] + 2*i)
+	mag_index = np.array(mag_index)[:-1] 
+	
+	# ext chip x y <filt_1_mag_inp> ... <filt_n_mag_inp> <output columns>
 	data = np.concatenate([dat[:,:4], dat[:,mag_index], dat[:,start:end]], axis=1)
 	
 	df = pd.DataFrame(data,columns=tot_cols)
