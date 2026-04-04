@@ -17,9 +17,10 @@ import astropy.units as u
 from pydol.pipeline.jwst import jpipe
 import multiprocessing as mp
 
+
+# JWST-FEAST config for pydol
 filters = ['F115W', 'F150W', 'F200W']
 
-# Query observations
 obs_table = Observations.query_criteria(
     proposal_id="1783",
     objectname="NGC4485",
@@ -27,21 +28,15 @@ obs_table = Observations.query_criteria(
     dataRights="PUBLIC"
 )
 
-# Get product list once
 products = Observations.get_product_list(obs_table)
-
-# Remove duplicates
 products = unique(products, keys="productFilename")
-
-# Keep only UNCAL files
 products = products[products['productSubGroupDescription'] == 'UNCAL']
 
 for filt in filters:
     
-    data_dir = f"/zfs-home/202404072C/JWST/data/ngc4485/data/stage0/{filt}/"
+    data_dir = f"/zfs-home/202404072C/JWST/data/ngc4485/data/{filt}/stage0/"
     os.makedirs(data_dir, exist_ok=True)
 
-    # Select only files for this filter
     filt_products = products[products['filters'] == filt]
 
     Observations.download_products(
