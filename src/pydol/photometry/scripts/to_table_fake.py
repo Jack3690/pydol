@@ -25,7 +25,7 @@ if __name__ == "__main__":
 	n_image_filt = {filt: 0 for filt in filts}
 	
 	for i in cols:
-	    if 'Measured counts' in i:
+		if 'Measured counts' in i:
 			for filt in filts:
 				if filt in i:
 					n_image_filt[filt] +=1
