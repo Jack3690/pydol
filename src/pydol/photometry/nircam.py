@@ -70,7 +70,7 @@ def nircam_phot(
     quality_filters = "f200w"
 ):
 
-    if not input_files:
+    if input_files is None or len(input_files) == 0:
         raise ValueError("input_files cannot be empty")
 
     if not all(i.lower().endswith(".fits") for i in input_files):
