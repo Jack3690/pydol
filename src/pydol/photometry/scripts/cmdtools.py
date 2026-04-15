@@ -5,6 +5,7 @@ from astropy.coordinates import angular_separation
 import astropy.units as u
 from scipy.stats import gaussian_kde
 from astropy.modeling import models, fitting
+from astropy.visualization import simple_norm
 import seaborn as sb
 from .catalog_filter import box, ellipse, polygon
 from matplotlib.colors import LinearSegmentedColormap
@@ -193,16 +194,15 @@ def gen_CMD(
     isochrone_params.setdefault('label_max', 10)
     isochrone_params.setdefault('met', [0.02])
     isochrone_params.setdefault('age', [7,8,9])
-    isochrone_params.setdefault('iso_mask_lim',1)
     
-    plot_settings.setdefault('Av.fontsize',15)
-    plot_settings.setdefault('legend.fontsize',15)
+    plot_settings.setdefault('Av.fontsize',20)
+    plot_settings.setdefault('legend.fontsize',20)
     plot_settings.setdefault('lw',3)
     plot_settings.setdefault('s',0.2)
     plot_settings.setdefault('alpha',1)
     plot_settings.setdefault('print_met',False)
     plot_settings.setdefault('legend.ncols',1)
-
+    
     
     error_settings.setdefault('mag_err_cols', [
         f'mag_err_{filters["filt1"].upper()}',
@@ -217,6 +217,7 @@ def gen_CMD(
     kde_contours.setdefault('kde_bin',100j)
     kde_contours.setdefault('cmap','jet')
     kde_contours.setdefault('bw', 0.05)
+    kde_contours.setdefault('perc_cut', 84)
     
     other_settings.setdefault('ab_dist',True)
     other_settings.setdefault('skip_data',False)
@@ -282,8 +283,12 @@ def gen_CMD(
         kernel = gaussian_kde(values, bw_method=kde_contours['bw'])
         f = np.reshape(kernel(positions), xx.shape)
         tick_color='white'
+        perc_cut = np.percentile(f.ravel(), kde_contours['perc_cut'])
+
+        f[f<=perc_cut] = np.nan
+        norm = simple_norm(f.T, 'log', min_percent=100-kde_contours['perc_cut'])
         ax.imshow(f.T, cmap=kde_contours['cmap'], extent=(*axis_limits['xlims'], *axis_limits['ylims']),
-                  interpolation='nearest', aspect='auto')
+                  interpolation='nearest', aspect='auto', norm=norm, zorder=100, origin='lower')
 
     elif kde_contours['gen_contours']:
         ax.scatter(x, y, s=plot_settings['s'], color='black', label='data')
@@ -294,8 +299,8 @@ def gen_CMD(
         sb.kdeplot(x=x, y=y, levels=[0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99],
                    ax=ax, color='black')
 
-    elif not other_settings['skip_data']:
-        ax.scatter(x, y, s=plot_settings['s'], color='black', label='data')
+    if not other_settings['skip_data']:
+        ax.scatter(x, y, s=plot_settings['s'], color='black', label='data', zorder=50)
         
     ax.set_xlim(axis_limits['xlims'][0],axis_limits['xlims'][1])
     ax.set_ylim(axis_limits['ylims'][0],axis_limits['ylims'][1])
@@ -328,14 +333,14 @@ def gen_CMD(
                        & (df_iso['label']<=isochrone_params['label_max'])]
                         
         for i,age in enumerate(isochrone_params['ages']):
-            t = df_iso[(np.round(df_iso['logAge'],5) == age)]
+            t = df_iso[(np.round(df_iso['logAge'],1) == age)]
             for Z in isochrone_params['met']:
                 subset = t[t['Zini'] == Z]
                 x_iso = subset[f"{filters['filt1'].upper()}mag"] + AF1 - (
                         subset[f"{filters['filt2'].upper()}mag"] + AF2)
                 y_iso = subset[f"{filters['filt3'].upper()}mag"] + AF3 + distance_modulus
                        
-                mask = (y_iso.values[1:]- y_iso.values[:-1])<isochrone_params['iso_mask_lim']
+                mask = (y_iso.values[1:]- y_iso.values[:-1])<3
                 mask = np.array([True] + list(mask))
                 mask = np.where(~mask, np.nan, 1)
                 
@@ -345,7 +350,7 @@ def gen_CMD(
                     label = label=age_lin[i]
                                
                 ax.plot(x_iso*mask, y_iso*mask, lw=plot_settings['lw'],
-                        label=label,alpha=plot_settings['alpha'])
+                        label=label,alpha=plot_settings['alpha'], zorder=200)
 
     # Absolute magnitude
     if other_settings['ab_dist']:
@@ -436,6 +441,7 @@ def gen_CMD(
     ax.legend(fontsize=plot_settings['legend.fontsize'], ncols = plot_settings['legend.ncols'])
 
     fig.tight_layout()
+    
     return fig, ax, tab
                      
 def gen_CMD_xcut(tab,
