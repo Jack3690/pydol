@@ -26,6 +26,7 @@ def acs_phot(
     crowd_cut=2.25,
     obj_type=2,
     SNR_min=5,
+    quality_filters = "f814w"
 ):
     """
     HST ACS photometry using DOLPHOT (HPC-friendly version)
@@ -181,7 +182,7 @@ def acs_phot(
     # -------------------------------------------------------
     mask = np.ones(len(phot_table), dtype=bool)
 
-    for filt in filter.split("_"):
+    for filt in quality_filters.split("_"):
         filt = filt.upper()
         mask &= (
             (phot_table[f"sharpness_{filt}"]**2 <= sharp_cut) &
@@ -222,6 +223,7 @@ def acs_phot_comp(
     ang=245,
     nx=10,
     ny=10,
+    quality_filters = 'f814w'
 ):
     """
     ACS completeness analysis using DOLPHOT (HPC-optimized version)
@@ -398,7 +400,7 @@ def acs_phot_comp(
     # -------------------------------------------------------
     mask = np.ones(len(phot_table), dtype=bool)
 
-    for filt in filter.split("_"):
+    for filt in quality_filters.split("_"):
         filt = filt.upper()
         mask &= (
             (phot_table[f"sharpness_{filt}"]**2 <= sharp_cut) &
