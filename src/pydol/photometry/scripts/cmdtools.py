@@ -1169,7 +1169,7 @@ def gen_CMD_ycut(tab,
     ax.set_ylim(axis_limits['ylims'][0],axis_limits['ylims'][1])
     
     ax.tick_params(which='both', length=15,direction="in", 
-                   bottom=True, top=True,left=True, width = 3)
+                   bottom=True, top=True,left=True, right=True, width = 3)
     
     ax.tick_params(which='minor', length=8, width = 3)
     ax.xaxis.set_minor_locator(AutoMinorLocator())
