@@ -24,9 +24,10 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QSizePolicy,
     QLineEdit,
+    QProgressDialog,
 )
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
@@ -45,10 +46,97 @@ from matplotlib.ticker import AutoMinorLocator, AutoLocator
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.stats import gaussian_kde
 from astropy.wcs.utils import proj_plane_pixel_scales
-import pandas as pd
 
 # Minimalistic seaborn style
 sb.set_theme(style="white")
+
+# ==========================================================
+# BACKGROUND WORKERS  (keeps UI responsive)
+# ==========================================================
+
+class CatalogWorker(QObject):
+    """Load an astropy Table in a background thread.
+
+    Strategy by file type:
+    - .fits  -> fits.open(memmap=False) avoids the mmap warning on filesystems
+                that don't support it (NFS, WSL, certain network mounts).
+    - .csv / .txt -> pandas read_csv (3-10x faster than astropy for large text
+                files) then converted back to an astropy Table.
+    - other  -> astropy Table.read generic fallback.
+    """
+    finished = pyqtSignal(object)   # emits the Table on success
+    error    = pyqtSignal(str)
+
+    def __init__(self, filename):
+        super().__init__()
+        self.filename = filename
+
+    def run(self):
+        try:
+            ext = os.path.splitext(self.filename)[1].lower()
+
+            if ext in ('.fits', '.fit'):
+                # memmap=False reads the HDU into RAM immediately, avoiding the
+                # 'falling back to denywrite' warning entirely.
+                with fits.open(self.filename, memmap=False) as hdul:
+                    tab = None
+                    for hdu in hdul:
+                        if hdu.data is not None and hdu.data.dtype.names:
+                            tab = Table(hdu.data)
+                            break
+                    if tab is None:
+                        tab = Table.read(self.filename)
+
+            elif ext in ('.csv', '.txt', '.tsv'):
+                sep = '\t' if ext == '.tsv' else ','
+                df  = pd.read_csv(self.filename, sep=sep, comment='#',
+                                   low_memory=False)
+                tab = Table.from_pandas(df)
+
+            else:
+                tab = Table.read(self.filename)
+
+            self.finished.emit(tab)
+        except Exception as exc:
+            self.error.emit(str(exc))
+
+
+class CMDWorker(QObject):
+    """Run gen_CMD in a background thread."""
+    finished = pyqtSignal(object, object, object)  # fig, ax, tab
+    error    = pyqtSignal(str)
+
+    def __init__(self, tab, df_iso, params, fig, ax):
+        super().__init__()
+        self.tab    = tab
+        self.df_iso = df_iso
+        self.params = params
+        self.fig    = fig
+        self.ax     = ax
+
+    def run(self):
+        try:
+            p = self.params
+            fig, ax, tab1 = gen_CMD(
+                self.tab,
+                self.df_iso,
+                p['filters'],
+                p['positions'],
+                p['region'],
+                p['extinction'],
+                p['distance_modulus'],
+                p['axis_limits'],
+                p['isochrone_params'],
+                plot_settings=p['plot_settings'],
+                error_settings=p['error_settings'],
+                kde_contours=p['kde_contours'],
+                other_settings={'ab_dist': True},
+                fig=self.fig,
+                ax=self.ax,
+            )
+            self.finished.emit(fig, ax, tab1)
+        except Exception as exc:
+            self.error.emit(str(exc))
 
 # mpl.rcParams.update({
 #     #"text.usetex": False,                # If using LaTeX for labels
@@ -90,6 +178,14 @@ Av_dict = {
             'f606w': 0.90941,
             'f814w': 0.59845
           }
+
+def _is_float(s):
+    """Return True if string s can be parsed as a float."""
+    try:
+        float(s)
+        return True
+    except (ValueError, TypeError):
+        return False
 
 def gen_CMD(
     tab,
@@ -261,12 +357,14 @@ def gen_CMD(
     for col in error_settings['mag_err_cols']:
         tab = tab[tab[col] <= error_settings['mag_err_lim']]
 
-    # Compute angular separation or define square field
-    tab['r'] = angular_separation(
-        tab[positions['ra_col']] * u.deg,
-        tab[positions['dec_col']] * u.deg,
-        positions['ra_cen'] * u.deg,
-        positions['dec_cen'] * u.deg).to(u.arcsec).value
+    # Compute angular separation – fully vectorised (no per-row unit overhead)
+    ra_rad   = np.deg2rad(np.asarray(tab[positions['ra_col']],  dtype=np.float64))
+    dec_rad  = np.deg2rad(np.asarray(tab[positions['dec_col']], dtype=np.float64))
+    ra_c     = np.deg2rad(float(positions['ra_cen']))
+    dec_c    = np.deg2rad(float(positions['dec_cen']))
+    tab['r'] = np.rad2deg(
+        angular_separation(ra_rad, dec_rad, ra_c, dec_c)
+    ) * 3600.0   # degrees → arcseconds
 
     if region['spatial_filter']=='circle':
         tab = tab[(tab['r'] >= region['r_in'])
@@ -288,12 +386,10 @@ def gen_CMD(
     elif region['spatial_filter']=='polygon':
         tab = polygon(tab, positions['ra_col'], positions['dec_col'], region['points'])
 
-    # Compute magnitudes and colors
-    x = tab[f'mag_vega_{filters["filt1"].upper()}'] - tab[f'mag_vega_{filters["filt2"].upper()}']
-    y = tab[f'mag_vega_{filters["filt3"].upper()}']
-
-    x = x.value.astype(float)
-    y = y.value.astype(float)
+    # Compute magnitudes and colors – extract to plain float64 arrays immediately
+    x = (np.asarray(tab[f'mag_vega_{filters["filt1"].upper()}'], dtype=np.float64)
+       - np.asarray(tab[f'mag_vega_{filters["filt2"].upper()}'], dtype=np.float64))
+    y =  np.asarray(tab[f'mag_vega_{filters["filt3"].upper()}'], dtype=np.float64)
 
     # Initialize figure and axis if not provided
     if fig is None or ax is None:
@@ -306,16 +402,24 @@ def gen_CMD(
 
     # Kernel density estimation or scatter plot
     tick_color = 'black'
+    _KDE_MAX_SAMPLES = 50_000   # subsample for speed on large catalogs
     if kde_contours['gen_kde'] and not kde_contours['gen_contours']:
         xx, yy = np.mgrid[
             axis_limits['xlims'][0]:axis_limits['xlims'][1]:kde_contours['kde_bin'],
             axis_limits['ylims'][0]:axis_limits['ylims'][1]:kde_contours['kde_bin']]
         
-        positions = np.vstack([xx.ravel(), yy.ravel()])
-        values = np.vstack([x, y])
+        positions_kde = np.vstack([xx.ravel(), yy.ravel()])
+        # subsample for large datasets to keep KDE tractable
+        n_pts = len(x)
+        if n_pts > _KDE_MAX_SAMPLES:
+            idx = np.random.choice(n_pts, _KDE_MAX_SAMPLES, replace=False)
+            xs, ys = x[idx], y[idx]
+        else:
+            xs, ys = x, y
+        values = np.vstack([xs, ys])
 
         kernel = gaussian_kde(values, bw_method=kde_contours['bw'])
-        f = np.reshape(kernel(positions), xx.shape)
+        f = np.reshape(kernel(positions_kde), xx.shape)
         tick_color='white'
         perc_cut = np.percentile(f.ravel(), 84)
 
@@ -327,10 +431,17 @@ def gen_CMD(
     elif kde_contours['gen_contours']:
         ax.scatter(x, y, s=plot_settings['s'], color='black', label='data')
         cmap_custom = LinearSegmentedColormap.from_list("custom_grey_to_white", ["grey", "white"], N=256)
-        sb.kdeplot(x=x, y=y, levels=[0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99],
+        # subsample seaborn kdeplot for large datasets
+        n_pts = len(x)
+        if n_pts > _KDE_MAX_SAMPLES:
+            idx = np.random.choice(n_pts, _KDE_MAX_SAMPLES, replace=False)
+            xs, ys = x[idx], y[idx]
+        else:
+            xs, ys = x, y
+        sb.kdeplot(x=xs, y=ys, levels=[0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99],
                    ax=ax, fill=True, cmap=cmap_custom)
         
-        sb.kdeplot(x=x, y=y, levels=[0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99],
+        sb.kdeplot(x=xs, y=ys, levels=[0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99],
                    ax=ax, color='black')
 
     if not other_settings['skip_data']:
@@ -487,89 +598,203 @@ class CMDCanvas(FigureCanvasQTAgg):
         self.fig.tight_layout()
 
     def plot_cmd(self, tab, params):
-        # Remove all axes except the first one to clear twin axes
+        """Legacy synchronous path (kept for compatibility). Prefer threaded path."""
         self.ax = self.fig.add_subplot(111)
         while len(self.fig.axes) > 1:
             self.fig.axes[-1].remove()
-        # Clear the remaining axis
         self.fig.axes[0].clear()
         self.ax = self.fig.axes[0]
-        if hasattr(self, 'df_iso'):
-            df_cmd_jwst = self.df_iso
-        else:
-            df_cmd_jwst = None
-        print(params)
-        fig,ax, tab1 = gen_CMD(tab, 
-            df_cmd_jwst,
-            params['filters'], 
-            params['positions'],
-            params['region'],
-            params['extinction'],
-            params['distance_modulus'],
-            params['axis_limits'],
-            params['isochrone_params'],
-            plot_settings=params['plot_settings'],
-            error_settings=params['error_settings'],
-            kde_contours=params['kde_contours'],
-            other_settings={'ab_dist': True},
+        df_iso = getattr(self, 'df_iso', None)
+        p = params
+        gen_CMD(tab, df_iso,
+            p['filters'], p['positions'], p['region'], p['extinction'],
+            p['distance_modulus'], p['axis_limits'], p['isochrone_params'],
+            plot_settings=p['plot_settings'], error_settings=p['error_settings'],
+            kde_contours=p['kde_contours'], other_settings={'ab_dist': True},
             fig=self.fig, ax=self.ax)
-
-        isochrone_params = params['isochrone_params']
-        isochrone_params['ages'] = [9.0, 10.0,]
-        isochrone_params['met']  = [0.002]
-
-        # TBD
-        # fig,ax, tab1 = gen_CMD(tab, 
-        #     None,
-        #     params['filters'], 
-        #     params['positions'],
-        #     params['region'],
-        #     params['extinction'],
-        #     params['distance_modulus'],
-        #     params['axis_limits'],
-        #     params['isochrone_params'],
-        #     plot_settings=params['plot_settings'],
-        #     error_settings=params['error_settings'],
-        #     kde_contours=params['kde_contours'],
-        #     other_settings={'ab_dist': True, 'skip_data': True},
-        #     fig=fig, ax=ax)
-
         self.draw()
 
 
 
 class FITSCanvas(FigureCanvasQTAgg):
+    """FITS image canvas with level-of-detail (LOD) rendering.
+
+    The full-resolution float32 array is always kept in ``self._full_data``.
+    Whenever the axes viewport changes (zoom / pan / resize) ``_refresh_lod``
+    is called: it clips the visible pixel rectangle, block-averages it down to
+    at most ``_SCREEN_PX`` pixels in each dimension, and replaces the imshow
+    data in-place — no full redraw needed.  WCS coordinates are preserved
+    because we never touch the axes transform; only the image array changes.
+    """
+
+    _SCREEN_PX = 1024   # target max pixels per axis for the displayed tile
 
     def __init__(self, parent=None):
-
         self.fig = Figure(figsize=(6, 6))
         super().__init__(self.fig)
-
         self.ax = self.fig.add_subplot(111)
         self.fig.tight_layout()
         self.fig.clear()
 
-    def plot_fits(self, data, wcs=None, title=None):
+        self._full_data  = None   # float32 full-res array
+        self._im         = None   # the AxesImage kept alive for set_data
+        self._lod_cid    = None   # mpl callback id for xlim_changed
+        self._resize_cid = None
 
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _extract_tile(data, x0, x1, y0, y1):
+        """Clip pixel bounds to array and return the sub-array + actual bounds."""
+        H, W = data.shape
+        px0 = max(0,   int(np.floor(x0)))
+        px1 = min(W,   int(np.ceil(x1)))
+        py0 = max(0,   int(np.floor(y0)))
+        py1 = min(H,   int(np.ceil(y1)))
+        # guard against degenerate view (e.g. during init)
+        if px1 <= px0 or py1 <= py0:
+            return data, 0, W, 0, H
+        return data[py0:py1, px0:px1], px0, px1, py0, py1
+
+    @staticmethod
+    def _block_avg(arr, max_px):
+        """Block-average arr so neither dimension exceeds max_px."""
+        h, w = arr.shape
+        ry = max(1, int(np.ceil(h / max_px)))
+        rx = max(1, int(np.ceil(w / max_px)))
+        if ry == 1 and rx == 1:
+            return arr
+        h2 = (h // ry) * ry
+        w2 = (w // rx) * rx
+        return arr[:h2, :w2].reshape(h2 // ry, ry, w2 // rx, rx).mean(axis=(1, 3))
+
+    def _get_pixel_viewport(self):
+        """Return current axes viewport in *pixel* coordinates (x0,x1,y0,y1)."""
+        xlim = self.ax.get_xlim()
+        ylim = self.ax.get_ylim()
+
+        if self.wcs is not None:
+            # Axes are in world coords (RA/Dec degrees) — convert to pixels.
+            # wcs_world2pix expects [[ra, dec], ...] and returns [[x, y], ...]
+            try:
+                corners_world = np.array([
+                    [xlim[0], ylim[0]],
+                    [xlim[1], ylim[1]],
+                ])
+                corners_pix = self.wcs.wcs_world2pix(corners_world, 0)
+                x0 = min(corners_pix[:, 0])
+                x1 = max(corners_pix[:, 0])
+                y0 = min(corners_pix[:, 1])
+                y1 = max(corners_pix[:, 1])
+                return x0, x1, y0, y1
+            except Exception:
+                pass
+
+        # No WCS, or conversion failed — axes are already in pixel coords.
+        x0, x1 = sorted(xlim)
+        y0, y1 = sorted(ylim)
+        return x0, x1, y0, y1
+
+    # ------------------------------------------------------------------
+    # LOD refresh — called on every zoom/pan/resize
+    # ------------------------------------------------------------------
+
+    def _refresh_lod(self, *_):
+        if self._full_data is None or self._im is None:
+            return
+
+        x0, x1, y0, y1 = self._get_pixel_viewport()
+        tile, tx0, tx1, ty0, ty1 = self._extract_tile(
+            self._full_data, x0, x1, y0, y1
+        )
+
+        # Downsample to screen resolution
+        display = self._block_avg(tile.astype(np.float32, copy=False),
+                                   self._SCREEN_PX)
+
+        # Update image data and extent so it maps to correct world coords.
+        # extent is (left, right, bottom, top) in *axes* data units.
+        if self.wcs is not None:
+            # Convert pixel corners back to world coords for the extent.
+            try:
+                corners_pix = np.array([
+                    [tx0, ty0],
+                    [tx1, ty1],
+                ])
+                corners_world = self.wcs.wcs_pix2world(corners_pix, 0)
+                ext_x0 = corners_world[0, 0]
+                ext_x1 = corners_world[1, 0]
+                ext_y0 = corners_world[0, 1]
+                ext_y1 = corners_world[1, 1]
+            except Exception:
+                ext_x0, ext_x1, ext_y0, ext_y1 = tx0, tx1, ty0, ty1
+        else:
+            ext_x0, ext_x1, ext_y0, ext_y1 = tx0, tx1, ty0, ty1
+
+        self._im.set_data(display)
+        self._im.set_extent([ext_x0, ext_x1, ext_y0, ext_y1])
+        # Redraw only the image artist — much cheaper than full draw()
+        self.ax.draw_artist(self._im)
+        self.update()
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def plot_fits(self, data, wcs=None, title=None):
+        """Load a new image.  Always stores full-res; LOD kicks in on interaction."""
+
+        # Disconnect old LOD callbacks
+        for cid_attr in ('_lod_cid', '_resize_cid'):
+            cid = getattr(self, cid_attr, None)
+            if cid is not None:
+                try:
+                    self.ax.callbacks.disconnect(cid)
+                except Exception:
+                    pass
+                try:
+                    self.mpl_disconnect(cid)
+                except Exception:
+                    pass
+            setattr(self, cid_attr, None)
+
+        # Store full-res data
+        self._full_data = data.astype(np.float32, copy=False)
+        H, W = self._full_data.shape
+
+        # Rebuild axes (needed when WCS changes projection)
+        self.fig.clear()
+        self.wcs = wcs
         if wcs is not None:
             self.ax = self.fig.add_subplot(111, projection=wcs)
-            self.wcs = wcs
         else:
             self.ax = self.fig.add_subplot(111)
-            self.wcs = None
 
-        data = np.array(data, dtype=float)
+        # Initial display: downsample full image to screen size
+        initial = self._block_avg(self._full_data, self._SCREEN_PX)
 
-        vmin = self.vmin
-        vmax = self.vmax
+        # Compute full-image extent in axes coords
+        if wcs is not None:
+            try:
+                corners = wcs.wcs_pix2world(
+                    np.array([[0, 0], [W, H]]), 0
+                )
+                extent = [corners[0,0], corners[1,0], corners[0,1], corners[1,1]]
+            except Exception:
+                extent = [-0.5, W - 0.5, -0.5, H - 0.5]
+        else:
+            extent = [-0.5, W - 0.5, -0.5, H - 0.5]
 
-        print(vmin, vmax)
-
-        image = self.ax.imshow(
-            data,
-            origin="lower",
-            cmap="jet",
-            norm=LogNorm(vmin=vmin, vmax=vmax),
+        self._im = self.ax.imshow(
+            initial,
+            origin='lower',
+            cmap='jet',
+            norm=LogNorm(vmin=self.vmin, vmax=self.vmax),
+            interpolation='nearest',
+            extent=extent,
+            aspect='equal',
         )
 
         if title:
@@ -577,6 +802,15 @@ class FITSCanvas(FigureCanvasQTAgg):
 
         self.fig.tight_layout()
         self.ax.grid(False)
+
+        # Connect LOD refresh to viewport-change events
+        self._lod_cid    = self.ax.callbacks.connect(
+            'xlim_changed', self._refresh_lod
+        )
+        self._resize_cid = self.mpl_connect(
+            'resize_event', self._refresh_lod
+        )
+
         self.draw()
 
 
@@ -644,28 +878,6 @@ class StellarPopulationGUI(QMainWindow):
         region_layout = QVBoxLayout()
         region_panel.setLayout(region_layout)
 
-        cbar_panel = QWidget()
-        cbar_layout = QHBoxLayout()
-        cbar_layout.addWidget(QLabel("Colorbar: "))
-        cbar_panel.setLayout(cbar_layout)
-
-        # cmap limits
-        cbar_layout.addWidget(QLabel("vmin:"))
-        self.vmin_input = QLineEdit()
-        self.vmin_input.setText("")
-        cbar_layout.addWidget(self.vmin_input)
-
-        # cmap limits
-        cbar_layout.addWidget(QLabel("vmax:"))
-        self.vmax_input = QLineEdit()
-        self.vmax_input.setText("")
-        cbar_layout.addWidget(self.vmax_input)
-
-        self.plot_img = QPushButton("Show Image")
-        self.plot_img.clicked.connect(self.plot_image)
-        cbar_layout.addWidget(self.plot_img)
-
-        left_layout.addWidget(cbar_panel)
         region_layout.addWidget(QLabel("Regions"))
 
         self.btn_rectangle = QPushButton("Add Rectangle")
@@ -975,7 +1187,7 @@ class StellarPopulationGUI(QMainWindow):
             return
 
         try:
-            with fits.open(filename) as hdul:
+            with fits.open(filename, memmap=False) as hdul:
                 header = hdul[0].header
                 data = hdul[0].data
                 self.ra_cen = header['CRVAL1'] if 'CRVAL1' in header else None
@@ -993,27 +1205,20 @@ class StellarPopulationGUI(QMainWindow):
                 if data.ndim != 2:
                     raise ValueError("FITS image data must be 2D.")
 
-                data = np.array(data, dtype=float)
+                data = np.array(data, dtype=np.float32)
                 wcs = None
                 try:
                     wcs = WCS(header)
                 except Exception:
                     wcs = None
-                if self.vmin_input.text().isnumeric() & self.vmax_input.text().isnumeric():
-                    vmin = float(self.vmin_input.text())
-                    vmax = float(self.vmax_input.text())
-                   
-                else:
-                    vmin = np.nanmin(data)
-                    vmax = np.nanmax(data)
-                if vmin<0:
-                    vmin= 0
 
+                # Auto-compute display range from the data
+                finite = data[np.isfinite(data)]
+                vmin = max(0.0, float(np.percentile(finite, 1)))
+                vmax = float(np.percentile(finite, 99.5))
                 self.image_canvas.vmin = vmin
                 self.image_canvas.vmax = vmax
-                self.vmin_input.setText(str(self.image_canvas.vmin))
-                self.vmax_input.setText(str(self.image_canvas.vmax))
-                self.data=data
+                self.data = data
                 self.wcs = wcs
                 self.title = os.path.basename(filename)
                 self.image_canvas.plot_fits(data, wcs=wcs, title=os.path.basename(filename))
@@ -1022,26 +1227,6 @@ class StellarPopulationGUI(QMainWindow):
         except Exception as exc:
             QMessageBox.critical(self, "Load FITS Image", str(exc))
             self.statusBar().showMessage("Failed to load FITS image.")
-
-    def plot_image(self):
-        if hasattr(self, 'data'):
-            if self.vmin_input.text().isnumeric() & self.vmax_input.text().isnumeric():
-                vmin = float(self.vmin_input.text())
-                vmax = float(self.vmax_input.text())
-
-            else:
-                vmin = np.nanmin(self.data)
-                vmax = np.nanmax(self.data)
-            if vmin<0:
-                vmin= 0
-            self.image_canvas.vmin = vmin
-            self.image_canvas.vmax = vmax
-            self.vmin_input.setText(str(self.image_canvas.vmin))
-            self.vmax_input.setText(str(self.image_canvas.vmax))
-            self.image_canvas.plot_fits(self.data, wcs=self.wcs, title=self.title)
-            self.statusBar().showMessage(f"Image Plotted Successfully")
-        else:
-            QMessageBox.warning(self, "Plot Image", "No image data to plot. Please load a FITS image first.")
 
     def load_isochrone(self):
 
@@ -1226,10 +1411,44 @@ class StellarPopulationGUI(QMainWindow):
 
         self._update_region_display(region_for_params)
         try:
-            self.cmd_canvas.plot_cmd(self.catalog_table, params)
-            self.statusBar().showMessage("CMD plotted successfully.")
+            # Run CMD generation in a background thread to keep UI responsive
+            self.submit_cmd_button.setEnabled(False)
+            self.statusBar().showMessage("Plotting CMD…")
+
+            # prepare axes on main thread (matplotlib requirement)
+            self.cmd_canvas.ax = self.cmd_canvas.fig.add_subplot(111)
+            while len(self.cmd_canvas.fig.axes) > 1:
+                self.cmd_canvas.fig.axes[-1].remove()
+            self.cmd_canvas.fig.axes[0].clear()
+            self.cmd_canvas.ax = self.cmd_canvas.fig.axes[0]
+
+            df_iso = getattr(self.cmd_canvas, 'df_iso', None)
+
+            self._cmd_thread = QThread()
+            self._cmd_worker = CMDWorker(
+                self.catalog_table, df_iso, params,
+                self.cmd_canvas.fig, self.cmd_canvas.ax
+            )
+            self._cmd_worker.moveToThread(self._cmd_thread)
+            self._cmd_thread.started.connect(self._cmd_worker.run)
+            self._cmd_worker.finished.connect(self._on_cmd_done)
+            self._cmd_worker.error.connect(self._on_cmd_error)
+            self._cmd_worker.finished.connect(self._cmd_thread.quit)
+            self._cmd_worker.error.connect(self._cmd_thread.quit)
+            self._cmd_thread.start()
         except Exception as exc:
-            QMessageBox.warning(self, "CMD Plot", f"Unable to plot CMD for selected filters: {exc}")
+            self.submit_cmd_button.setEnabled(True)
+            QMessageBox.warning(self, "CMD Plot", f"Unable to plot CMD: {exc}")
+
+    def _on_cmd_done(self, fig, ax, tab1):
+        self.submit_cmd_button.setEnabled(True)
+        self.cmd_canvas.draw()
+        self.statusBar().showMessage(f"CMD plotted successfully ({len(tab1):,} stars).")
+
+    def _on_cmd_error(self, msg):
+        self.submit_cmd_button.setEnabled(True)
+        QMessageBox.warning(self, "CMD Plot", f"Unable to plot CMD: {msg}")
+        self.statusBar().showMessage("CMD plot failed.")
 
     def load_catalog(self):
 
@@ -1240,15 +1459,44 @@ class StellarPopulationGUI(QMainWindow):
             "Catalog Files (*.csv *.txt *.fits)"
         )
 
-        if filename:
-            tab = Table.read(filename)
-            self.catalog_table = tab
+        if not filename:
+            return
 
-            self.update_cmd_filters(tab)
-            
-            self.statusBar().showMessage(
-                f"Loaded catalog: {filename}"
-            )
+        # Show a non-modal progress indicator while loading in background
+        self._catalog_progress = QProgressDialog("Loading catalog…", None, 0, 0, self)
+        self._catalog_progress.setWindowTitle("Please wait")
+        self._catalog_progress.setWindowModality(Qt.WindowModal)
+        self._catalog_progress.setMinimumDuration(0)
+        self._catalog_progress.setValue(0)
+        self._catalog_progress.show()
+
+        # Disable load/plot controls while loading
+        self.submit_cmd_button.setEnabled(False)
+
+        self._cat_thread = QThread()
+        self._cat_worker = CatalogWorker(filename)
+        self._cat_worker.moveToThread(self._cat_thread)
+        self._cat_thread.started.connect(self._cat_worker.run)
+        self._cat_worker.finished.connect(self._on_catalog_loaded)
+        self._cat_worker.error.connect(self._on_catalog_error)
+        self._cat_worker.finished.connect(self._cat_thread.quit)
+        self._cat_worker.error.connect(self._cat_thread.quit)
+        self._cat_thread.start()
+
+    def _on_catalog_loaded(self, tab):
+        self._catalog_progress.close()
+        self.submit_cmd_button.setEnabled(True)
+        self.catalog_table = tab
+        self.update_cmd_filters(tab)
+        self.statusBar().showMessage(
+            f"Loaded catalog: {len(tab):,} rows"
+        )
+
+    def _on_catalog_error(self, msg):
+        self._catalog_progress.close()
+        self.submit_cmd_button.setEnabled(True)
+        QMessageBox.critical(self, "Load Catalog", msg)
+        self.statusBar().showMessage("Failed to load catalog.")
 
     def _update_region_display(self, region):
         self.region_list.clear()
