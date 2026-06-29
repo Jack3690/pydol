@@ -34,7 +34,7 @@ from matplotlib.colors import LogNorm
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sb
-from matplotlib.widgets import RectangleSelector
+from matplotlib.widgets import RectangleSelector, EllipseSelector
 import matplotlib.patches as mpatches
 
 from astropy import units as u
@@ -518,6 +518,7 @@ class CMDCanvas(FigureCanvasQTAgg):
         isochrone_params['ages'] = [9.0, 10.0,]
         isochrone_params['met']  = [0.002]
 
+        self.tab_filt = tab1
         # TBD
         # fig,ax, tab1 = gen_CMD(tab, 
         #     None,
@@ -549,8 +550,11 @@ class FITSCanvas(FigureCanvasQTAgg):
         self.fig.tight_layout()
         self.fig.clear()
 
-    def plot_fits(self, data, wcs=None, title=None):
+        self.setFocusPolicy(Qt.ClickFocus)
+        self.setFocus()
 
+    def plot_fits(self, data, wcs=None, title=None):
+        self.fig.clear()
         if wcs is not None:
             self.ax = self.fig.add_subplot(111, projection=wcs)
             self.wcs = wcs
@@ -560,21 +564,27 @@ class FITSCanvas(FigureCanvasQTAgg):
 
         data = np.array(data, dtype=float)
 
-        vmin = self.vmin
-        vmax = self.vmax
-
-        print(vmin, vmax)
-
         image = self.ax.imshow(
             data,
             origin="lower",
             cmap="jet",
-            norm=LogNorm(vmin=vmin, vmax=vmax),
+            norm='log',
         )
 
         if title:
             self.ax.set_title(title)
 
+        self.fig.tight_layout()
+        self.ax.grid(False)
+        self.draw()
+
+    def plot_fits_stars(self, tab=None):
+
+        ra = tab['ra']
+        dec = tab['dec']
+        self.ax.scatter(ra, dec, s=5, alpha=0.5, facecolor=None,
+                        edgecolor='red', linewidth=2,
+                       transform=self.ax.get_transform('world'), label='Stars')
         self.fig.tight_layout()
         self.ax.grid(False)
         self.draw()
@@ -642,32 +652,12 @@ class StellarPopulationGUI(QMainWindow):
         region_panel = QWidget()
 
         region_layout = QVBoxLayout()
+  
         region_panel.setLayout(region_layout)
 
-        cbar_panel = QWidget()
-        cbar_layout = QHBoxLayout()
-        cbar_layout.addWidget(QLabel("Colorbar: "))
-        cbar_panel.setLayout(cbar_layout)
-
-        # cmap limits
-        cbar_layout.addWidget(QLabel("vmin:"))
-        self.vmin_input = QLineEdit()
-        self.vmin_input.setText("")
-        cbar_layout.addWidget(self.vmin_input)
-
-        # cmap limits
-        cbar_layout.addWidget(QLabel("vmax:"))
-        self.vmax_input = QLineEdit()
-        self.vmax_input.setText("")
-        cbar_layout.addWidget(self.vmax_input)
-
-        self.plot_img = QPushButton("Show Image")
-        self.plot_img.clicked.connect(self.plot_image)
-        cbar_layout.addWidget(self.plot_img)
-
-        left_layout.addWidget(cbar_panel)
         region_layout.addWidget(QLabel("Regions"))
 
+        self.region_type = None
         self.btn_rectangle = QPushButton("Add Rectangle")
         self.btn_ellipse = QPushButton("Add Ellipse")
         self.btn_circle = QPushButton("Add Circle")
@@ -675,11 +665,23 @@ class StellarPopulationGUI(QMainWindow):
 
         # connect region buttons
         self.btn_rectangle.clicked.connect(self.start_rectangle_mode)
-        region_layout.addWidget(self.btn_rectangle)
-        region_layout.addWidget(self.btn_ellipse)
-        region_layout.addWidget(self.btn_circle)
-        region_layout.addWidget(self.btn_annulus)
+        self.btn_ellipse.clicked.connect(self.start_ellipse_mode)
 
+        region_button_layout1 = QHBoxLayout()
+        region_button_layout2 = QHBoxLayout()
+
+        region_button_layout1.addWidget(self.btn_rectangle)
+        region_button_layout1.addWidget(self.btn_ellipse)
+        region_button_layout2.addWidget(self.btn_circle)
+        region_button_layout2.addWidget(self.btn_annulus)
+
+        region_layout.addLayout(region_button_layout1)
+        region_layout.addLayout(region_button_layout2)
+
+        self.refresh_button = QPushButton("Refresh Regions")
+        self.refresh_button.clicked.connect(self.plot_image)
+
+        region_layout.addWidget(self.refresh_button) 
         region_layout.addWidget(QLabel("Current Regions"))
 
         self.region_list = QListWidget()
@@ -832,23 +834,12 @@ class StellarPopulationGUI(QMainWindow):
         self.metallicity_input.setText("0.02")
         metallicity_layout.addWidget(self.metallicity_input)
         
-        right_layout.addWidget(metallicity_panel)
-        
-        # --------------------------------------------
-        # AGES PANEL
-        # --------------------------------------------
-        
-        ages_panel = QWidget()
-        ages_layout = QHBoxLayout()
-        ages_panel.setLayout(ages_layout)
-        
-        ages_layout.addWidget(QLabel("Ages (comma-sep):"))
+        metallicity_layout.addWidget(QLabel("Ages (comma-sep):"))
         self.ages_input = QLineEdit()
         self.ages_input.setText("6.7,7,7.7,8")
-        ages_layout.addWidget(self.ages_input)
+        metallicity_layout.addWidget(self.ages_input)
         
-        right_layout.addWidget(ages_panel)
-        
+        right_layout.addWidget(metallicity_panel)
         # --------------------------------------------
         # PLOT SETTINGS PANEL
         # --------------------------------------------
@@ -891,16 +882,38 @@ class StellarPopulationGUI(QMainWindow):
         self.ref_xpos_input = QLineEdit()
         self.ref_xpos_input.setText("-0.5")
         error_settings_layout.addWidget(self.ref_xpos_input)
+
+        error_settings_layout.addWidget(QLabel("Magnitude Cut"))
+        self.mag_cut_input = QLineEdit()
+        self.mag_cut_input.setText("99")
+        error_settings_layout.addWidget(self.mag_cut_input)
         
         right_layout.addWidget(error_settings_panel)
         
         # Add stretch to push button to bottom
         right_layout.addStretch()
         
+        self.buttons_panel = QWidget()
+        self.buttons_layout = QHBoxLayout()
+        self.buttons_panel.setLayout(self.buttons_layout)
+
         # Submit button
         self.submit_cmd_button = QPushButton("Plot CMD")
         self.submit_cmd_button.clicked.connect(self.plot_selected_cmd)
-        right_layout.addWidget(self.submit_cmd_button)
+        
+        # Plot Stars button
+        self.submit_stars_button = QPushButton("Plot Stars")
+        self.submit_stars_button.clicked.connect(self.plot_selected_stars)
+
+        # Download Catalog button
+        self.download_catalog_button = QPushButton("Download Catalog")
+        self.download_catalog_button.clicked.connect(self.download_catalog)
+
+        self.buttons_layout.addWidget(self.submit_cmd_button)
+        self.buttons_layout.addWidget(self.submit_stars_button) 
+        self.buttons_layout.addWidget(self.download_catalog_button) 
+        right_layout.addWidget(self.buttons_panel)
+
 
         # --------------------------------------------
         # SPLITTER
@@ -999,20 +1012,7 @@ class StellarPopulationGUI(QMainWindow):
                     wcs = WCS(header)
                 except Exception:
                     wcs = None
-                if self.vmin_input.text().isnumeric() & self.vmax_input.text().isnumeric():
-                    vmin = float(self.vmin_input.text())
-                    vmax = float(self.vmax_input.text())
-                   
-                else:
-                    vmin = np.nanmin(data)
-                    vmax = np.nanmax(data)
-                if vmin<0:
-                    vmin= 0
-
-                self.image_canvas.vmin = vmin
-                self.image_canvas.vmax = vmax
-                self.vmin_input.setText(str(self.image_canvas.vmin))
-                self.vmax_input.setText(str(self.image_canvas.vmax))
+  
                 self.data=data
                 self.wcs = wcs
                 self.title = os.path.basename(filename)
@@ -1025,23 +1025,27 @@ class StellarPopulationGUI(QMainWindow):
 
     def plot_image(self):
         if hasattr(self, 'data'):
-            if self.vmin_input.text().isnumeric() & self.vmax_input.text().isnumeric():
-                vmin = float(self.vmin_input.text())
-                vmax = float(self.vmax_input.text())
 
-            else:
-                vmin = np.nanmin(self.data)
-                vmax = np.nanmax(self.data)
-            if vmin<0:
-                vmin= 0
-            self.image_canvas.vmin = vmin
-            self.image_canvas.vmax = vmax
-            self.vmin_input.setText(str(self.image_canvas.vmin))
-            self.vmax_input.setText(str(self.image_canvas.vmax))
             self.image_canvas.plot_fits(self.data, wcs=self.wcs, title=self.title)
             self.statusBar().showMessage(f"Image Plotted Successfully")
         else:
             QMessageBox.warning(self, "Plot Image", "No image data to plot. Please load a FITS image first.")
+
+    def plot_selected_stars(self):
+        self.statusBar().showMessage("Plotting Stars...")
+        if hasattr(self.cmd_canvas, 'tab_filt'):
+
+            self.image_canvas.plot_fits_stars(tab=self.cmd_canvas.tab_filt)
+            self.statusBar().showMessage(f"Stars Plotted Successfully")
+        else:
+            QMessageBox.warning(self, "Plot Stars", "No Catalog data to plot. Please load a FITS Table first.") 
+
+    def download_catalog(self):
+        if hasattr(self.cmd_canvas, 'tab_filt'):
+            self.cmd_canvas.tab_filt.write('filtered_catalog.fits', overwrite=True)
+            self.statusBar().showMessage("Filtered catalog saved as 'filtered_catalog.fits'.")
+        else:
+            QMessageBox.warning(self, "Download Catalog", "No filtered catalog available. Please plot the CMD first.")
 
     def load_isochrone(self):
 
@@ -1061,6 +1065,7 @@ class StellarPopulationGUI(QMainWindow):
 
         if not filename:
             return
+        
     def update_cmd_filters(self, table):
         self.filter1_combo.clear()
         self.filter2_combo.clear()
@@ -1103,9 +1108,11 @@ class StellarPopulationGUI(QMainWindow):
         self.filter3_combo.blockSignals(False)
 
     def plot_selected_cmd(self, *args):
-        self.statusBar().showMessage("Plotting CMD...")
         if self.catalog_table is None:
+            QMessageBox.warning(self, "CMD Plot", "No catalog loaded. Please load a FITS table first.")
             return
+
+        self.statusBar().showMessage("Plotting CMD...")
 
         if not (self.filter1_combo.isEnabled() and self.filter2_combo.isEnabled() and self.filter3_combo.isEnabled()):
             return
@@ -1178,6 +1185,11 @@ class StellarPopulationGUI(QMainWindow):
             ref_xpos = float(self.ref_xpos_input.text())
         except ValueError:
             mag_err_lim, ref_xpos = 0.2, -0.5
+
+        try:
+            mag_cut = float(self.mag_cut_input.text())
+        except ValueError:  
+            mag_cut = 99.0
                 
         # Extract current rectangle state only when Plot CMD is clicked
         region_for_params = self._extract_current_region()
@@ -1190,6 +1202,17 @@ class StellarPopulationGUI(QMainWindow):
                 'height_in': 0,
                 'width_out': region_for_params['width'],
                 'height_out': region_for_params['height'],
+                'ang': region_for_params.get('ang', 0),
+                'ra_cen': region_for_params.get('ra_cen'),
+                'dec_cen': region_for_params.get('dec_cen'),
+            }
+        elif region_for_params is not None and region_for_params.get('spatial_filter') == 'ellipse':
+            region_dict = {
+                'spatial_filter': 'ellipse',
+                'a1': 0,
+                'b1': 0,
+                'a2': region_for_params['a'],
+                'b2': region_for_params['b'],
                 'ang': region_for_params.get('ang', 0),
                 'ra_cen': region_for_params.get('ra_cen'),
                 'dec_cen': region_for_params.get('dec_cen'),
@@ -1226,7 +1249,8 @@ class StellarPopulationGUI(QMainWindow):
 
         self._update_region_display(region_for_params)
         try:
-            self.cmd_canvas.plot_cmd(self.catalog_table, params)
+            filtered_tab = self.catalog_table[self.catalog_table[f'mag_vega_{filt3.upper()}'] <= mag_cut]
+            self.cmd_canvas.plot_cmd(filtered_tab, params)
             self.statusBar().showMessage("CMD plotted successfully.")
         except Exception as exc:
             QMessageBox.warning(self, "CMD Plot", f"Unable to plot CMD for selected filters: {exc}")
@@ -1256,43 +1280,43 @@ class StellarPopulationGUI(QMainWindow):
             self.region_list.addItem("No active region")
             return
 
-        width = region.get('width')
-        height = region.get('height')
-        angle = region.get('ang', 0)
-        ra_cen = region.get('ra_cen')
-        dec_cen = region.get('dec_cen')
+        if self.region_type=='rectangular':
+            width = region.get('width')
+            height = region.get('height')
+            angle = region.get('ang', 0)
+            ra_cen = region.get('ra_cen')
+            dec_cen = region.get('dec_cen')
 
-        self.region_list.addItem(f"Width: {width:.1f} arcsec")
-        self.region_list.addItem(f"Height: {height:.1f} arcsec")
-        self.region_list.addItem(f"Angle: {angle:.1f}°")
-        if ra_cen is not None and dec_cen is not None:
-            self.region_list.addItem(f"RA center: {ra_cen:.6f}")
-            self.region_list.addItem(f"Dec center: {dec_cen:.6f}")
+            self.region_list.addItem(f"Width: {width:.1f} arcsec")
+            self.region_list.addItem(f"Height: {height:.1f} arcsec")
+            self.region_list.addItem(f"Angle: {angle:.1f}°")
+            if ra_cen is not None and dec_cen is not None:
+                self.region_list.addItem(f"RA center: {ra_cen:.6f}")
+                self.region_list.addItem(f"Dec center: {dec_cen:.6f}")
+
+        elif self.region_type=='ellipse':
+            a = region.get('a')
+            b = region.get('b')
+            angle = region.get('ang', 0)
+            ra_cen = region.get('ra_cen')
+            dec_cen = region.get('dec_cen')
+
+            self.region_list.addItem(f"Semi-major axis: {a:.1f} arcsec")
+            self.region_list.addItem(f"Semi-minor axis: {b:.1f} arcsec")
+            self.region_list.addItem(f"Angle: {angle:.1f}°")
+            if ra_cen is not None and dec_cen is not None:
+                self.region_list.addItem(f"RA center: {ra_cen:.6f}")
+                self.region_list.addItem(f"Dec center: {dec_cen:.6f}")
 
     # ---------------------------
     # Rectangle selection handlers
     # ---------------------------
     def start_rectangle_mode(self):
+        self.region_type = 'rectangular'
         """Enable interactive rectangle drawing on the FITS image."""
         if not hasattr(self, 'image_canvas'):
             return
         ax = self.image_canvas.ax
-        
-        # Remove any existing rectangle patch and handles
-        if hasattr(self, 'rect_patch') and self.rect_patch is not None:
-            try:
-                self.rect_patch.remove()
-            except Exception:
-                pass
-            self.rect_patch = None
-        
-        if hasattr(self, 'rect_handles') and self.rect_handles is not None:
-            try:
-                for h in self.rect_handles:
-                    h.remove()
-            except Exception:
-                pass
-            self.rect_handles = []
         
         # ensure any existing selector is removed
         if hasattr(self, 'rect_selector') and self.rect_selector is not None:
@@ -1301,10 +1325,13 @@ class StellarPopulationGUI(QMainWindow):
                 del self.rect_selector
             except Exception:
                 pass
-
-        # Reset rotation slider
-        #self.angle_slider.setValue(0)
-        self.region_list.clear()
+        # ensure any existing selector is removed
+        if hasattr(self, 'ellip_selector') and self.ellip_selector is not None:
+            try:
+                self.ellip_selector.set_active(False)
+                del self.ellip_selector
+            except Exception:
+                pass
         
         # Create RectangleSelector (avoid using 'drawtype' for compatibility)
         self.rect_selector = RectangleSelector(
@@ -1316,131 +1343,56 @@ class StellarPopulationGUI(QMainWindow):
             minspany=5,
             spancoords='data',
             interactive=True,
+            use_data_coordinates =True
         )
-        self.image_canvas.draw()
         self.statusBar().showMessage('Draw rectangle on image (click-drag).')
+
+    def start_ellipse_mode(self):
+        self.region_type = 'ellipse'
+        """Enable interactive ellipse drawing on the FITS image."""
+        if not hasattr(self, 'image_canvas'):
+            return
+        ax = self.image_canvas.ax
+
+        if hasattr(self, 'rect_selector') and self.rect_selector is not None:
+            try:
+                self.rect_selector.set_active(False)
+                del self.rect_selector
+            except Exception:
+                pass
+
+        # ensure any existing selector is removed
+        if hasattr(self, 'ellip_selector') and self.ellip_selector is not None:
+            try:
+                self.ellip_selector.set_active(False)
+                del self.ellip_selector
+            except Exception:
+                pass
+        
+        # Create EllipseSelector (avoid using 'drawtype' for compatibility)
+        self.ellip_selector = EllipseSelector(
+            ax,
+            self.on_rect_select,
+            useblit=True,
+            button=[1],
+            minspanx=5,
+            minspany=5,
+            spancoords='data',
+            interactive=True,
+            use_data_coordinates =True
+        )
+        self.statusBar().showMessage('Draw ellipse on image (click-drag).')
 
 
     def on_rect_select(self, eclick, erelease):
         """Callback when rectangle is drawn. eclick/erelease are mouse events."""
         x1, y1 = eclick.xdata, eclick.ydata
         x2, y2 = erelease.xdata, erelease.ydata
-        if None in (x1, y1, x2, y2):
-            return
-
-        # compute center and extents in data coordinates
-        x0 = min(x1, x2)
-        y0 = min(y1, y2)
-        width_data = abs(x2 - x1)
-        height_data = abs(y2 - y1)
-
-        # convert to arcseconds if WCS present
-        if hasattr(self.image_canvas, 'wcs') and self.image_canvas.wcs is not None:
-            scales = proj_plane_pixel_scales(self.image_canvas.wcs)  # degrees/pixel
-            # assume width_data/height_data are in world units (degrees) when WCS projection used
-            # if the axes are in world coords, width_data already in degrees
-            # but if the selector returned pixel coords, convert pixels->deg via scales
-            # Try to detect: if width_data < 1e-3 treat as degrees already, else assume pixels
-            if abs(width_data) < 1e-3:
-                width_deg = width_data
-                height_deg = height_data
-            else:
-                # treat as pixel counts
-                width_deg = width_data * scales[0]
-                height_deg = height_data * scales[1]
-
-            width_arcsec = width_deg * 3600.0
-            height_arcsec = height_deg * 3600.0
-            # rectangle in data units should be degrees
-            patch_width = width_deg
-            patch_height = height_deg
-        else:
-            # No WCS: treat data units as pixels; assume 1 pixel = 1 arcsec
-            width_arcsec = width_data
-            height_arcsec = height_data
-            patch_width = width_data
-            patch_height = height_data
-
-        angle = 0.0
-
-        # keep the RectangleSelector active so the rectangle remains editable after release
-        self.image_canvas.draw()
+   
         self.region_list.clear()
         self.region_list.addItem("Region defined. Click Plot CMD to show properties.")
         self.statusBar().showMessage('Rectangle added. Drag the corners or edges to edit the selection, then click Plot CMD.')
 
-    # manual rectangle apply removed; drawing/editing is interactive only
-
-    # ---------------------------
-    # Interactive rectangle editing
-    # ---------------------------
-    def _rect_corners(self, x0, y0, w, h, angle_deg):
-        """Return rotated rectangle corners given lower-left x0,y0, width, height and angle in degrees."""
-        cx = x0 + w / 2.0
-        cy = y0 + h / 2.0
-        theta = np.deg2rad(angle_deg)
-        # corners relative to center (counter-clockwise)
-        dx = np.array([-w/2.0, w/2.0, w/2.0, -w/2.0])
-        dy = np.array([-h/2.0, -h/2.0, h/2.0, h/2.0])
-        xs = cx + dx * np.cos(theta) - dy * np.sin(theta)
-        ys = cy + dx * np.sin(theta) + dy * np.cos(theta)
-        return list(zip(xs, ys))
-
-    def init_rect_interaction(self):
-        """Create handles and connect events for the current rect_patch."""
-        if not hasattr(self, 'rect_patch') or self.rect_patch is None:
-            return
-        ax = self.image_canvas.ax
-
-        # remove old handles
-        try:
-            for h in getattr(self, 'rect_handles', []):
-                h.remove()
-        except Exception:
-            pass
-        self.rect_handles = []
-
-        # get rect properties
-        x0, y0 = self.rect_patch.get_xy()
-        w = self.rect_patch.get_width()
-        h = self.rect_patch.get_height()
-        ang = getattr(self.rect_patch, 'angle', 0.0)
-
-        corners = self._rect_corners(x0, y0, w, h, ang)
-        # add corner handles
-        for (cx, cy) in corners:
-            c = mpatches.Circle((cx, cy), radius=max(w, h) * 0.02, facecolor='white', edgecolor='black', zorder=300)
-            ax.add_patch(c)
-            self.rect_handles.append(c)
-
-        # rotation handle: place above top-center
-        top_center = ((corners[2][0] + corners[1][0]) / 2.0, (corners[2][1] + corners[1][1]) / 2.0)
-        # offset outward
-        vecx = top_center[0] - (x0 + w/2.0)
-        vecy = top_center[1] - (y0 + h/2.0)
-        norm = np.hypot(vecx, vecy) if (vecx or vecy) else 1.0
-        off = 0.1 * max(w, h)
-        rx = top_center[0] + (vecx / norm) * off
-        ry = top_center[1] + (vecy / norm) * off
-        self.rotate_handle = mpatches.Circle((rx, ry), radius=max(w, h) * 0.02, facecolor='yellow', edgecolor='black', zorder=300)
-        ax.add_patch(self.rotate_handle)
-
-        # connect events
-        canvas = self.image_canvas
-        # disconnect previous if any
-        for cid in ('_cid_press', '_cid_release', '_cid_motion'):
-            if hasattr(self, cid):
-                try:
-                    canvas.mpl_disconnect(getattr(self, cid))
-                except Exception:
-                    pass
-
-        self._cid_press = canvas.mpl_connect('button_press_event', self._on_rect_press)
-        self._cid_release = canvas.mpl_connect('button_release_event', self._on_rect_release)
-        self._cid_motion = canvas.mpl_connect('motion_notify_event', self._on_rect_motion)
-
-        self.interaction_mode = None
-        self.interaction_data = {}
 
     def _distance_display(self, event, x, y):
         """Distance in display coords between event and data point x,y."""
@@ -1448,127 +1400,26 @@ class StellarPopulationGUI(QMainWindow):
         ex, ey = event.x, event.y
         return np.hypot(disp[0] - ex, disp[1] - ey)
 
-    def _on_rect_press(self, event):
-        if event.inaxes != self.image_canvas.ax:
-            return
-        if not hasattr(self, 'rect_patch') or self.rect_patch is None:
-            return
-
-        # check rotate handle first
-        if self._distance_display(event, *self.rotate_handle.center) < 10:
-            self.interaction_mode = 'rotate'
-            # store center
-            x0, y0 = self.rect_patch.get_xy()
-            w = self.rect_patch.get_width(); h = self.rect_patch.get_height()
-            cx = x0 + w/2.0; cy = y0 + h/2.0
-            self.interaction_data = {'center': (cx, cy), 'start_event': event, 'start_angle': getattr(self.rect_patch, 'angle', 0.0)}
-            return
-
-        # check corner handles
-        for idx, handle in enumerate(self.rect_handles):
-            if self._distance_display(event, *handle.center) < 10:
-                self.interaction_mode = 'corner'
-                self.interaction_data = {'corner_idx': idx, 'start_event': event}
-                return
-
-        # check inside rect polygon
-        # build path
-        x0, y0 = self.rect_patch.get_xy(); w = self.rect_patch.get_width(); h = self.rect_patch.get_height(); ang = getattr(self.rect_patch, 'angle', 0.0)
-        corners = self._rect_corners(x0, y0, w, h, ang)
-        from matplotlib.path import Path
-        path = Path(corners)
-        if path.contains_point((event.xdata, event.ydata)):
-            self.interaction_mode = 'move'
-            self.interaction_data = {'start_event': event, 'orig_xy': (x0, y0)}
-            return
-
-    def _on_rect_motion(self, event):
-        if event.inaxes != self.image_canvas.ax:
-            return
-        if not hasattr(self, 'rect_patch') or self.rect_patch is None:
-            return
-        if self.interaction_mode is None:
-            return
-
-        x0, y0 = self.rect_patch.get_xy(); w = self.rect_patch.get_width(); h = self.rect_patch.get_height(); ang = getattr(self.rect_patch, 'angle', 0.0)
-
-        if self.interaction_mode == 'move':
-            se = self.interaction_data['start_event']
-            dx = event.xdata - se.xdata
-            dy = event.ydata - se.ydata
-            new_x = self.interaction_data['orig_xy'][0] + dx
-            new_y = self.interaction_data['orig_xy'][1] + dy
-            self.rect_patch.set_xy((new_x, new_y))
-
-        elif self.interaction_mode == 'corner':
-            idx = self.interaction_data['corner_idx']
-            # resize depending on corner idx
-            corners = self._rect_corners(x0, y0, w, h, ang)
-            # transform event point into rectangle-local coordinates by rotating by -ang around center
-            cx = x0 + w/2.0; cy = y0 + h/2.0
-            theta = -np.deg2rad(ang)
-            ex = event.xdata - cx; ey = event.ydata - cy
-            lx = ex * np.cos(theta) - ey * np.sin(theta)
-            ly = ex * np.sin(theta) + ey * np.cos(theta)
-            # compute new width/height from local coords based on opposite corner
-            # map corner index to sign
-            signs = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-            sx, sy = signs[idx]
-            new_w = abs((lx - (-sx * w/2.0)))
-            new_h = abs((ly - (-sy * h/2.0)))
-            # ensure min size
-            new_w = max(new_w, 1e-6); new_h = max(new_h, 1e-6)
-            # compute new lower-left in world coords
-            # center stays at cx,cy in this simple resize
-            new_x0 = cx - new_w/2.0; new_y0 = cy - new_h/2.0
-            self.rect_patch.set_width(new_w); self.rect_patch.set_height(new_h); self.rect_patch.set_xy((new_x0, new_y0))
-
-        elif self.interaction_mode == 'rotate':
-            data = self.interaction_data
-            cx, cy = data['center']
-            # angle between center->start and center->current
-            sx = data['start_event'].xdata - cx; sy = data['start_event'].ydata - cy
-            ex = event.xdata - cx; ey = event.ydata - cy
-            if sx is None or ex is None:
-                return
-            start_ang = np.arctan2(sy, sx)
-            cur_ang = np.arctan2(ey, ex)
-            delta = np.rad2deg(cur_ang - start_ang)
-            new_ang = (data['start_angle'] + delta) % 360
-            self.rect_patch.angle = new_ang
-
-        # update handles positions
-        self._update_handles()
-        self.image_canvas.draw()
-
-    def _on_rect_release(self, event):
-        if self.interaction_mode is None:
-            return
-        # Just clean up interaction state; don't update region yet
-        # Parameters will be extracted when Plot CMD is clicked
-        self.interaction_mode = None
-        self.interaction_data = {}
-
+ 
     def _extract_current_region(self):
         """Compute region dict from current RectangleSelector state. Returns None if no rectangle."""
-        if hasattr(self, 'rect_selector') and self.rect_selector is not None:
-            try:
-                x1, x2, y1, y2 = self.rect_selector.extents
-                x0 = min(x1, x2)
-                y0 = min(y1, y2)
-                w = abs(x2 - x1)
-                h = abs(y2 - y1)
-                ang = 0.0
-            except Exception:
-                return None
-        elif hasattr(self, 'rect_patch') and self.rect_patch is not None:
-            x0, y0 = self.rect_patch.get_xy()
-            w = self.rect_patch.get_width()
-            h = self.rect_patch.get_height()
-            ang = getattr(self.rect_patch, 'angle', 0.0)
+        if self.region_type == 'rectangular':
+            x1, x2, y1, y2 = self.rect_selector.extents
+            x0 = min(x1, x2)
+            y0 = min(y1, y2)
+            w = abs(x2 - x1)
+            h = abs(y2 - y1)
+            ang = self.rect_selector.rotation
+
+        elif self.region_type == 'ellipse':
+            x1, x2, y1, y2 = self.ellip_selector.extents
+            x0 = min(x1, x2)
+            y0 = min(y1, y2)
+            w = abs(x2 - x1)
+            h = abs(y2 - y1)
+            ang = self.ellip_selector.rotation
         else:
             return None
-
         # compute center in data coords
         center_data_x = x0 + w / 2.0
         center_data_y = y0 + h / 2.0
@@ -1598,6 +1449,12 @@ class StellarPopulationGUI(QMainWindow):
             w_arc = float(w_deg_q.to(u.arcsec).value)
             h_arc = float(h_deg_q.to(u.arcsec).value)
 
+            # Get image angle with respect to sky plane
+            M = self.image_canvas.wcs.pixel_scale_matrix
+
+            theta_east = -np.degrees(np.arctan2(M[1,0], M[0,0])) + 180
+
+            print(theta_east)
             # determine RA/Dec for center
             try:
                 if 0.0 <= center_data_x <= 360.0 and -90.0 <= center_data_y <= 90.0:
@@ -1622,40 +1479,24 @@ class StellarPopulationGUI(QMainWindow):
             w_arc = w
             h_arc = h
 
-        return {
-            'spatial_filter': 'box',
-            'width': float(w_arc),
-            'height': float(h_arc),
-            'ang': float(ang),
-            'center_data': (float(center_data_x), float(center_data_y)),
-            'ra_cen': ra_cen,
-            'dec_cen': dec_cen,
-        }
-
-    def _update_handles(self):
-        if not hasattr(self, 'rect_patch') or self.rect_patch is None:
-            return
-        x0, y0 = self.rect_patch.get_xy(); w = self.rect_patch.get_width(); h = self.rect_patch.get_height(); ang = getattr(self.rect_patch, 'angle', 0.0)
-        corners = self._rect_corners(x0, y0, w, h, ang)
-        for handle, (cx, cy) in zip(self.rect_handles, corners):
-            try:
-                handle.set_center((cx, cy))
-            except Exception:
-                handle.center = (cx, cy)
-            handle.set_visible(True)
-        # update rotate handle
-        top_center = ((corners[2][0] + corners[1][0]) / 2.0, (corners[2][1] + corners[1][1]) / 2.0)
-        vecx = top_center[0] - (x0 + w/2.0)
-        vecy = top_center[1] - (y0 + h/2.0)
-        norm = np.hypot(vecx, vecy) if (vecx or vecy) else 1.0
-        off = 0.1 * max(w, h)
-        rx = top_center[0] + (vecx / norm) * off
-        ry = top_center[1] + (vecy / norm) * off
-        try:
-            self.rotate_handle.set_center((rx, ry))
-        except Exception:
-            self.rotate_handle.center = (rx, ry)
-
+        if self.region_type=='rectangular':
+            return {
+                'spatial_filter': 'box',
+                'width': np.round(w_arc,4),
+                'height': np.round(h_arc,4),
+                'ang': np.round(ang + theta_east, 4),
+                'ra_cen': np.round(ra_cen,7),
+                'dec_cen': np.round(dec_cen,7),
+            }
+        elif self.region_type=='ellipse':
+            return {
+                'spatial_filter': 'ellipse',
+                'a': np.round(w_arc,4)/2,
+                'b': np.round(h_arc,4)/2,
+                'ang': np.round(ang + theta_east, 4),
+                'ra_cen': np.round(ra_cen,7),
+                'dec_cen': np.round(dec_cen,7),
+            }
 
 # ==========================================================
 # MAIN
