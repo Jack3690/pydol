@@ -8,6 +8,8 @@ from astropy.table import Table
 from pydol.photometry.scripts.catalog_filter import ellipse, box, polygon
 import pandas as pd
 
+from PyQt5.QtGui import QIcon
+
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -551,6 +553,7 @@ class FITSCanvas(FigureCanvasQTAgg):
         self.fig.clear()
 
         self.setFocusPolicy(Qt.ClickFocus)
+        self.setWindowIcon(QIcon("./logo.png"))
         self.setFocus()
 
     def plot_fits(self, data, wcs=None, title=None):
