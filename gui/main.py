@@ -8,7 +8,7 @@ from astropy.table import Table
 from pydol.photometry.scripts.catalog_filter import ellipse, box, polygon
 import pandas as pd
 
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPalette, QColor
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -52,26 +52,6 @@ import pandas as pd
 # Minimalistic seaborn style
 sb.set_theme(style="white")
 
-# mpl.rcParams.update({
-#     #"text.usetex": False,                # If using LaTeX for labels
-#   #  "font.family": "serif",
-#   #  "font.serif": ["Computer Modern Roman"],
-#     "axes.labelsize": 15,
-#     "font.size": 15,
-#     "legend.fontsize": 10,
-#     "xtick.labelsize": 10,
-#     "ytick.labelsize": 10,
-#     "axes.titlesize": 10,
-#     "lines.linewidth": 1.0,
-#     "lines.markersize": 3,
-#     "figure.dpi": 100,                  # High-quality output
-#     "savefig.dpi": 100,
-#     "axes.grid": False,                 # Avoid grids unless needed
-#     "legend.frameon": False             # No legend frame
-# })
-
-# plt.rcParams['axes.titlesize']  = plt.rcParams['axes.labelsize'] = 10
-# plt.rcParams['xtick.labelsize'] = plt.rcParams['ytick.labelsize'] = 10
 # ==========================================================
 # CMD CANVAS
 # ==========================================================
@@ -498,8 +478,11 @@ class CMDCanvas(FigureCanvasQTAgg):
         self.ax = self.fig.axes[0]
         if hasattr(self, 'df_iso'):
             df_cmd_jwst = self.df_iso
+            df_cmd_jwst['logAge'] = np.round(df_cmd_jwst['logAge'], 1)
         else:
             df_cmd_jwst = None
+
+        
         print(params)
         fig,ax, tab1 = gen_CMD(tab, 
             df_cmd_jwst,
@@ -557,29 +540,34 @@ class FITSCanvas(FigureCanvasQTAgg):
         self.setFocus()
 
     def plot_fits(self, data, wcs=None, title=None):
-        self.fig.clear()
-        if wcs is not None:
-            self.ax = self.fig.add_subplot(111, projection=wcs)
-            self.wcs = wcs
+        data = np.asarray(data, dtype=np.float32)
+
+        if getattr(self, "_im", None) is not None and wcs is self.wcs and data.shape == self._im.get_array().shape:
+            self._im.set_data(data)
+            self._im.autoscale()
         else:
-            self.ax = self.fig.add_subplot(111)
-            self.wcs = None
+            self.fig.clear()
+            if wcs is not None:
+                self.ax = self.fig.add_subplot(111, projection=wcs)
+                self.wcs = wcs
+            else:
+                self.ax = self.fig.add_subplot(111)
+                self.wcs = None
 
-        data = np.array(data, dtype=float)
-
-        image = self.ax.imshow(
-            data,
-            origin="lower",
-            cmap="jet",
-            norm='log',
-        )
+            self._im = self.ax.imshow(
+                data,
+                origin="lower",
+                cmap="jet",
+                norm='log',
+                interpolation="nearest"
+            )
+            self.fig.tight_layout()
+            self.ax.grid(False)
 
         if title:
             self.ax.set_title(title)
 
-        self.fig.tight_layout()
-        self.ax.grid(False)
-        self.draw()
+        self.draw_idle()
 
     def plot_fits_stars(self, tab=None):
 
@@ -991,7 +979,7 @@ class StellarPopulationGUI(QMainWindow):
             return
 
         try:
-            with fits.open(filename) as hdul:
+            with fits.open(filename, memmap=True) as hdul:
                 header = hdul[0].header
                 data = hdul[0].data
                 self.ra_cen = header['CRVAL1'] if 'CRVAL1' in header else None
@@ -1251,6 +1239,7 @@ class StellarPopulationGUI(QMainWindow):
         }
 
         self._update_region_display(region_for_params)
+
         try:
             filtered_tab = self.catalog_table[self.catalog_table[f'mag_vega_{filt3.upper()}'] <= mag_cut]
             self.cmd_canvas.plot_cmd(filtered_tab, params)
@@ -1268,14 +1257,17 @@ class StellarPopulationGUI(QMainWindow):
         )
 
         if filename:
-            tab = Table.read(filename)
-            self.catalog_table = tab
+            try:
+                tab = Table.read(filename, memmap=True)
+                self.catalog_table = tab
 
-            self.update_cmd_filters(tab)
-            
-            self.statusBar().showMessage(
-                f"Loaded catalog: {filename}"
-            )
+                self.update_cmd_filters(tab)
+                
+                self.statusBar().showMessage(
+                    f"Loaded catalog: {filename}"
+                )
+            except Exception as e:
+                QMessageBox.warning(self, "Load Catalog", f"Error loading catalog: {e}")
 
     def _update_region_display(self, region):
         self.region_list.clear()
