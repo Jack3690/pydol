@@ -663,8 +663,8 @@ class StellarPopulationGUI(QMainWindow):
         self.region_type = None
         self.btn_rectangle = QPushButton("Add Rectangle")
         self.btn_ellipse = QPushButton("Add Ellipse")
-        self.btn_circle = QPushButton("Add Circle")
-        self.btn_annulus = QPushButton("Add Annulus")
+        self.btn_polygon = QPushButton("Add Polygon (TBD)")
+        self.btn_annulus = QPushButton("Add Annulus (TBD)")
 
         # connect region buttons
         self.btn_rectangle.clicked.connect(self.start_rectangle_mode)
@@ -675,8 +675,8 @@ class StellarPopulationGUI(QMainWindow):
 
         region_button_layout1.addWidget(self.btn_rectangle)
         region_button_layout1.addWidget(self.btn_ellipse)
-        region_button_layout2.addWidget(self.btn_circle)
-        region_button_layout2.addWidget(self.btn_annulus)
+        # region_button_layout2.addWidget(self.btn_polygon)
+        # region_button_layout2.addWidget(self.btn_annulus)
 
         region_layout.addLayout(region_button_layout1)
         region_layout.addLayout(region_button_layout2)
