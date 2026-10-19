@@ -48,7 +48,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from scipy.stats import gaussian_kde
 from astropy.wcs.utils import proj_plane_pixel_scales
 import pandas as pd
-
+import matplotlib as mpl
 # Minimalistic seaborn style
 sb.set_theme(style="white")
 
