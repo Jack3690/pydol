@@ -1,0 +1,71 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+%labels
+    Author avinash
+
+%setup
+    mkdir -p "${APPTAINER_ROOTFS}/cfitsio"
+    mkdir -p "${APPTAINER_ROOTFS}/dolphot"
+    mkdir -p "${APPTAINER_ROOTFS}/CRDS"
+    mkdir -p "${APPTAINER_ROOTFS}/data"
+
+%environment
+    export PATH=/dolphot/bin:$PATH
+    export PATH=/opt/venv/bin:$PATH
+    export PATH=/usr/local/bin:$PATH
+
+%post
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+
+    echo "=== Installing build dependencies ==="
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc \
+	wget \
+        g++ \
+        gfortran \
+        make \
+	topcat \
+	git \
+        zlib1g-dev
+
+    CFITSIO_SRC="/cfitsio"
+    DOLPHOT_SRC="/dolphot"
+    CFITSIO_INSTALL="$CFITSIO_SRC/built"
+
+    echo "=== Building CFITSIO ==="
+
+    cd "$CFITSIO_SRC"
+    ./configure --prefix="$CFITSIO_INSTALL" --enable-reentrant
+    make -j"$(nproc)"
+    make install
+
+    cd "$DOLPHOT_SRC"
+
+    make CFITSIO="$CFITSIO_INSTALL" -j"$(nproc)"
+
+    echo "=== Installing Python 3.12 ==="
+    #add-apt-repository -y ppa:deadsnakes/ppa
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3.12 \
+        python3.12-venv \
+        python3.12-dev
+
+    echo "=== Creating Python virtual environment ==="
+    python3.12 -m venv /opt/venv
+    /opt/venv/bin/pip install --upgrade pip
+
+    /opt/venv/bin/pip install  "pydol[jwst] @ git+https://github.com/Jack3690/pydol"  cmdstanpy
+	
+    # STILITS
+    apt-get install -y --no-install-recommends openjdk-17-jre-headless	
+
+%test
+    which gcc gfortran make
+    /opt/venv/bin/python --version
+    /opt/venv/bin/python -c "import pydol; print('pydol import OK')"
+    echo "Toolchain and Python environment present."

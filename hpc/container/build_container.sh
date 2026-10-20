@@ -1,0 +1,1 @@
+apptainer build  --bind /trabajo/avinash/softwares/cfitsio-4.6.2:/cfitsio  --bind /trabajo/avinash/softwares/dolphot3.1:/dolphot  --bind /trabajo/avinash/JWST/CRDS:/CRDS  --bind /trabajo/avinash/JWST/data:/data dolphot.sif dolphot.def
