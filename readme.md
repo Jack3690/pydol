@@ -5,12 +5,13 @@ PyDOL is a Python wrapper for the DOLPHOT (Dolphin (2000) and Dolphin (2016)). c
 **Please provide feedback if you use this code**
 
 ### Installation
+#### DOLPHOT Wrapper
 ```
 pip install git+https://github.com/Jack3690/pydol/
 ```
-
+#### DOLPHOT Wrapper + JWST NIRCam Pipeline
 ```
-pip install  "pydol[hst] @ git+https://github.com/Jack3690/pydol"
+pip install  "pydol[jwst] @ git+https://github.com/Jack3690/pydol"
 ```
 
 ## Pre-requisites
