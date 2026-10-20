@@ -1253,7 +1253,7 @@ class StellarPopulationGUI(QMainWindow):
             self,
             "Load Catalog",
             "",
-            "Catalog Files (*.csv *.txt *.fits)"
+            "Catalog Files (*.fits)"
         )
 
         if filename:
